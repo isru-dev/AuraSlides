@@ -23,7 +23,7 @@ rounded-xl
 shadow-[0_0_40px_rgba(139,92,246,0.25)]
 hover:scale-[1.02]
 transition-all
-duration-300"
+duration-300 cursor-pointer"
           >
             Generate Your First Presentaion Free
           </button>
@@ -41,7 +41,7 @@ rounded-xl
 shadow-[0_0_40px_rgba(139,92,246,0.25)]
 hover:scale-[1.02]
 transition-all
-duration-300"
+duration-300 cursor-pointer"
           >
             Watch 1-Min Demo
           </button>
