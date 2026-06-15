@@ -1,81 +1,122 @@
 export function Login() {
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-2 max-w-7xl mx-auto align-items-center min-h-screen">
-      <div className="bg-gradient-to-br from-[#94a5f0] via-[#0B1220] to-[#111827]  ">
-        <h1
-          className="bg-gradient-to-r
-from-[#67E8F9]
-via-[#A78BFA]
-to-[#C084FC]
-bg-clip-text
-text-transparent font-bold tracking-tight text-3xl  p-6 pb-5"
-        >
+    <section className="grid grid-cols-1 lg:grid-cols-2  mx-auto items-center min-h-screen px-20 gap-10 lg:gap-4 bg-[#050816] ">
+      
+      
+      <div className="flex flex-col justify-center py-8 lg:py-12 h-full">
+        <h1 className="bg-gradient-to-r from-[#67E8F9] via-[#A78BFA] to-[#C084FC] bg-clip-text text-transparent font-bold tracking-tight text-3xl mb-8 self-start">
           AuraSlides
         </h1>
-      <p className="text-slate-50 font-bold text-4xl lg:text-5xl leading-tight">
-  Turn ideas into
-  <br />
-  professional presentations
-  <br />
-  <span
-    className="bg-gradient-to-r from-[#67E8F9] via-[#A78BFA] to-[#C084FC]
-    bg-clip-text text-transparent"
-  >
-    with AI
-  </span>
-</p>
-        <p className="pb-4 text-slate-300">
-          Generate beautiful slide decks, automatically structured and ready to
-          present.
+        
+       
+        <p className="text-[#F8FAFC] font-bold text-4xl lg:text-5xl leading-tight mb-4">
+          Turn ideas into
+          <br />
+          professional presentations
+          <br />
+          <span className="bg-gradient-to-r from-[#67E8F9] via-[#A78BFA] to-[#C084FC] bg-clip-text text-transparent">
+            with AI
+          </span>
         </p>
-        <ul className="space-y-4 text-slate-100">
-  <li>
-    <span className="text-cyan-400 mr-2">✓</span>
-    AI-generated slide structures
-  </li>
-
-  <li>
-    <span className="text-cyan-400 mr-2">✓</span>
-    Multiple layout styles
-  </li>
-
-  <li>
-    <span className="text-cyan-400 mr-2">✓</span>
-    Export-ready presentations
-  </li>
-</ul>
+        
+        {/* Secondary Text (#CBD5E1) Subtitle */}
+        <p className="text-[#CBD5E1] text-base sm:text-lg mb-8 max-w-md leading-relaxed">
+          Generate beautiful slide decks, automatically structured and ready to present.
+        </p>
+        
+        {/* Value Bullet Points using Secondary Text */}
+        <ul className="space-y-4 text-[#CBD5E1] font-medium text-sm sm:text-base">
+          <li className="flex items-center">
+            <span className="text-[#67E8F9] mr-3 text-lg">✓</span>
+            AI-generated slide structures
+          </li>
+          <li className="flex items-center">
+            <span className="text-[#67E8F9] mr-3 text-lg">✓</span>
+            Multiple layout styles
+          </li>
+          <li className="flex items-center">
+            <span className="text-[#67E8F9] mr-3 text-lg">✓</span>
+            Export-ready presentations
+          </li>
+        </ul>
       </div>
-      <div className="bg-white/[0.03]
-border border-white/[0.06]
-backdrop-blur-xl
-rounded-3xl
-shadow-[0_0_40px_rgba(139,92,246,0.12)]">
-        <h1 className="text-3xl
-font-bold
-text-slate-50">Create your AuraSlides account</h1>
-        <h2 className="text-slate-400
-text-sm">Start generating AI-powered presentations in seconds.</h2>
-        <button className="bg-white
-text-slate-900
-border border-slate-200
-rounded-xl
-font-medium hover:bg-slate-100">Continue with Google</button>
-<p className="-text-slate-500">──────── OR ────────</p>
-        <form  action="post">
-          <label className="text-slate-700
-text-sm
-font-medium">Email</label>
-          <input type="Email" required  className="bg-[#111827] border-white[0.08]  text-slate-500 rounded-xl py-3 px-4"/>
-          <label className="text-slate-700
-text-sm
-font-medium">Password</label>
-          <input type="Password" required />
-          <a href="">Forgot Password?</a>
-          <button type="submit"> Sign In</button>
+
+      <div className="w-full max-w-md bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col p-8 sm:p-10 gap-6 justify-self-center  ">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] tracking-tight">
+            Welcome back
+          </h2>
+          <h3 className="text-[#94A3B8] text-sm mt-2">
+            Enter your credentials to access your presentations.
+          </h3>
+        </div>
+
+        <button className="w-full bg-[#111827]/40 text-[#CBD5E1] border border-[rgba(255,255,255,0.06)] rounded-xl font-medium py-3 px-4 hover:bg-[#111827]/80 hover:text-[#F8FAFC] flex items-center justify-center gap-3 transition-all duration-200 cursor-pointer text-sm">
+          <svg className="w-4 h-4" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          <span>Continue with Google</span>
+        </button>
+
+        <div className="flex items-center my-1">
+          <div className="flex-1 border-t border-[rgba(255,255,255,0.06)]"></div>
+          <span className="px-3 text-[10px] text-[#94A3B8]/60 font-semibold tracking-widest">OR</span>
+          <div className="flex-1 border-t border-[rgba(255,255,255,0.06)]"></div>
+        </div>
+
+        {/* Interactive Input Form */}
+        <form method="post" className="flex flex-col gap-4.5" onSubmit={(e) => e.preventDefault()}>
+          
+          {/* Email Address */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[#94A3B8] text-xs font-medium uppercase tracking-wider">
+              Email Address
+            </label>
+            <input
+              type="email"
+              required
+              placeholder="name@domain.com"
+              className="bg-[#111827]/80 border border-[rgba(255,255,255,0.06)] text-[#F8FAFC] placeholder-[#94A3B8]/40 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-[#06B6D4]/60 focus:ring-1 focus:ring-[#06B6D4]/30 transition-all duration-200"
+            />
+          </div>
+
+          {/* Password */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex justify-between items-center">
+              <label className="text-[#94A3B8] text-xs font-medium uppercase tracking-wider">
+                Password
+              </label>
+              <a href="/forgot-password" className="text-xs text-[#06B6D4] hover:text-[#8B5CF6] transition-colors">
+                Forgot password?
+              </a>
+            </div>
+            <input
+              type="password"
+              required
+              placeholder="••••••••"
+              className="bg-[#111827]/80 border border-[rgba(255,255,255,0.06)] text-[#F8FAFC] placeholder-[#94A3B8]/40 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-[#06B6D4]/60 focus:ring-1 focus:ring-[#06B6D4]/30 transition-all duration-200"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full mt-2 bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white font-medium py-3 rounded-xl shadow-[0_4px_25px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_35px_rgba(139,92,246,0.3)] hover:scale-[1.01] transition-all duration-300 cursor-pointer text-sm"
+          >
+            Sign In
+          </button>
         </form>
-        <p>Don't have an account?</p>
-        <a href="#">Create Account</a>
+
+        <div className="text-center text-xs text-[#94A3B8] mt-2">
+          Don't have an account?{" "}
+          <a href="/register" className="text-[#06B6D4] font-medium hover:text-[#8B5CF6] transition-colors ml-1">
+            Sign Up
+          </a>
+        </div>
       </div>
+
     </section>
   );
 }
