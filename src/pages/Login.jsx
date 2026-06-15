@@ -1,15 +1,15 @@
 export function Login() {
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-2  mx-auto items-center min-h-screen px-20 gap-10 lg:gap-4 bg-[#050816] ">
+    <section className="grid grid-cols-1 lg:grid-cols-2  mx-auto items-center min-h-screen px-8 lg:px-20 gap-10 lg:gap-4 bg-[#050816] ">
       
       
-      <div className="flex flex-col justify-center py-8 lg:py-12 h-full">
+      <div className="flex flex-col justify-center py-8 lg:py-12 h-full order-2 lg:order-1 px-4">
         <h1 className="bg-gradient-to-r from-[#67E8F9] via-[#A78BFA] to-[#C084FC] bg-clip-text text-transparent font-bold tracking-tight text-3xl mb-8 self-start">
           AuraSlides
         </h1>
         
        
-        <p className="text-[#F8FAFC] font-bold text-4xl lg:text-5xl leading-tight mb-4">
+        <p className="text-[#F8FAFC] font-bold text-3xl sm:text-4xl lg:text-5xl leading-tight mb-4">
           Turn ideas into
           <br />
           professional presentations
@@ -41,7 +41,7 @@ export function Login() {
         </ul>
       </div>
 
-      <div className="w-full max-w-md bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col p-8 sm:p-10 gap-6 justify-self-center  ">
+     <div className="w-full max-w-md bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col p-6 sm:p-8 lg:p-10 gap-5 sm:gap-6 justify-self-center order-1 lg:order-2">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] tracking-tight">
             Welcome back
