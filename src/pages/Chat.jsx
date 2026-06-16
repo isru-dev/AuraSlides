@@ -49,6 +49,7 @@ export function Chat() {
               {history.map((item, idx) => (
                 <button
                   key={idx}
+                  onClick={closeMenu}
                   className="w-full text-left py-2.5 px-3 rounded-xl text-xs text-[#CBD5E1] hover:bg-[#111827]/60 hover:text-[#F8FAFC] transition-all cursor-pointer truncate flex items-center gap-2.5 group"
                 >
                   <span className="text-[#F8FAFC] group-hover:text-[#A78BFA] transition-colors">
@@ -88,16 +89,60 @@ export function Chat() {
     border-r border-[rgba(255,255,255,0.06)]
     z-50
     transform transition-transform duration-300
-    md:hidden
+    md:hidden flex flex-col gap-4 justify-between
     ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
   `}
       >
+        <div>
         <div className="flex items-center justify-between p-4 border-b border-white/5">
           <span className="font-bold">AuraSlides</span>
 
           <button onClick={closeMenu} className="text-xl cursor-pointer">
             ✕
           </button>
+        </div>
+          <button className="w-full bg-[#111827]/40 text-[#F8FAFC] border border-[rgba(255,255,255,0.06)] rounded-xl py-2.5 px-4 text-xs font-semibold hover:bg-[#111827]/80 hover:border-[#67E8F9]/30 transition-all cursor-pointer flex items-center justify-center gap-2">
+            <span className="text-base text-[#67E8F9]">+</span> New Presentation
+          </button>
+         <div className="flex flex-col gap-2">
+            <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-widest px-2 mb-1">
+              Recent Decks
+            </span>
+            <div className="flex flex-col gap-1 overflow-y-auto max-h-[50vh] pr-1 custom-scrollbar">
+              {history.map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={closeMenu}
+                  className="w-full text-left py-2.5 px-3 rounded-xl text-xs text-[#CBD5E1] hover:bg-[#111827]/60 hover:text-[#F8FAFC] transition-all cursor-pointer truncate flex items-center gap-2.5 group"
+                >
+                  <span className="text-[#F8FAFC] group-hover:text-[#A78BFA] transition-colors">
+                    💬
+                  </span>
+                  <span className="truncate">{item}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          </div>
+          <div className="pb-4">
+           <div className="border-t border-[rgba(255,255,255,0.06)] pt-4 flex items-center justify-between px-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#06B6D4] to-[#8B5CF6] flex items-center justify-center text-xs font-bold text-white shadow-md shadow-[#06B6D4]/10 flex-shrink-0">
+              IG
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-medium text-[#F8FAFC] truncate">
+                Israel Gezahegn
+              </span>
+              <span className="text-[10px] text-[#94A3B8] truncate">
+                Premium Member
+              </span>
+            </div>
+          </div>
+          <button className="text-xs text-[#94A3B8] hover:text-[#F8FAFC] transition-colors p-1 cursor-pointer">
+            ⚙️
+          </button>
+        </div>
         </div>
       </aside>
       <main className="flex-1 flex flex-col justify-between items-center px-6 relative overflow-hidden">
