@@ -1,6 +1,6 @@
 export function Login() {
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-2  mx-auto items-center min-h-screen px-8 lg:px-20 gap-10 lg:gap-4 bg-[#050816] ">
+    <section className="grid grid-cols-1 lg:grid-cols-2  mx-auto items-center min-h-screen px-8 lg:px-20 gap-10 lg:gap-4 bg-[#050816] sm:pt-10">
       
       
       <div className="flex flex-col justify-center py-8 lg:py-12 h-full order-2 lg:order-1 px-4">
@@ -111,7 +111,7 @@ export function Login() {
 
         <div className="text-center text-xs text-[#94A3B8] mt-2">
           Don't have an account?{" "}
-          <a href="/register" className="text-[#06B6D4] font-medium hover:text-[#8B5CF6] transition-colors ml-1">
+          <a href="/chat" className="text-[#06B6D4] font-medium hover:text-[#8B5CF6] transition-colors ml-1">
             Sign Up
           </a>
         </div>
