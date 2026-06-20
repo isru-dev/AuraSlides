@@ -7,7 +7,7 @@ export function Chat() {
     "Quantum Computing Simplified",
     "Mobile App Pitch Deck v2",
   ]);
-
+  
   const [promptInput, setPromptInput] = useState("");
 
   const handlePromptSubmit = (e) => {
@@ -94,17 +94,17 @@ export function Chat() {
   `}
       >
         <div>
-        <div className="flex items-center justify-between p-4 border-b border-white/5">
-          <span className="font-bold">AuraSlides</span>
+          <div className="flex items-center justify-between p-4 border-b border-white/5">
+            <span className="font-bold">AuraSlides</span>
 
-          <button onClick={closeMenu} className="text-xl cursor-pointer">
-            ✕
-          </button>
-        </div>
+            <button onClick={closeMenu} className="text-xl cursor-pointer">
+              ✕
+            </button>
+          </div>
           <button className="w-full bg-[#111827]/40 text-[#F8FAFC] border border-[rgba(255,255,255,0.06)] rounded-xl py-2.5 px-4 text-xs font-semibold hover:bg-[#111827]/80 hover:border-[#67E8F9]/30 transition-all cursor-pointer flex items-center justify-center gap-2">
             <span className="text-base text-[#67E8F9]">+</span> New Presentation
           </button>
-         <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-widest px-2 mb-1">
               Recent Decks
             </span>
@@ -123,26 +123,26 @@ export function Chat() {
               ))}
             </div>
           </div>
-          </div>
-          <div className="pb-4">
-           <div className="border-t border-[rgba(255,255,255,0.06)] pt-4 flex items-center justify-between px-2">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#06B6D4] to-[#8B5CF6] flex items-center justify-center text-xs font-bold text-white shadow-md shadow-[#06B6D4]/10 flex-shrink-0">
-              IG
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs font-medium text-[#F8FAFC] truncate">
-                Israel Gezahegn
-              </span>
-              <span className="text-[10px] text-[#94A3B8] truncate">
-                Premium Member
-              </span>
-            </div>
-          </div>
-          <button className="text-xs text-[#94A3B8] hover:text-[#F8FAFC] transition-colors p-1 cursor-pointer">
-            ⚙️
-          </button>
         </div>
+        <div className="pb-4">
+          <div className="border-t border-[rgba(255,255,255,0.06)] pt-4 flex items-center justify-between px-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#06B6D4] to-[#8B5CF6] flex items-center justify-center text-xs font-bold text-white shadow-md shadow-[#06B6D4]/10 flex-shrink-0">
+                IG
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-medium text-[#F8FAFC] truncate">
+                  Israel Gezahegn
+                </span>
+                <span className="text-[10px] text-[#94A3B8] truncate">
+                  Premium Member
+                </span>
+              </div>
+            </div>
+            <button className="text-xs text-[#94A3B8] hover:text-[#F8FAFC] transition-colors p-1 cursor-pointer">
+              ⚙️
+            </button>
+          </div>
         </div>
       </aside>
       <main className="flex-1 flex flex-col justify-between items-center px-6 relative overflow-hidden">
