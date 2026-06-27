@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/authModels");
+const bcrypt = require('bcrypt');
 router.get("/reg", (req, res) => {
   res.send("yes sir");
 });
@@ -46,8 +47,13 @@ router.post("/register", async (req, res) => {
         message: "Invalid email address.",
       });
     }
-    const newUser = await User.create({ email, password });
-    res.status(201).json(newUser);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await User.create({ email, password: hashedPassword });
+    return res.status(201).json({
+      success: true,
+      message: "User registered successfully.",
+      user: { id: newUser._id, email: newUser.email },
+    });
   } catch (err) {
     res.status(500).json({ message: "server error", err: err.message });
   }
@@ -77,16 +83,17 @@ router.post("/login", async (req, res) => {
     }
     const findUser = await User.findOne({ email });
     if (!findUser) {
-      return res.status(400).json({ success: false, message: "Invalid email or password." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid email or password." });
     }
+ const isMatch = await bcrypt.compare(password, findUser.password);
 
-    if ( password === findUser.password) {
-      // res.redirect('');
+    if (isMatch) {
       console.log("login successfully");
       res.status(200).json({ message: "login successfully." });
-    }else{
-      res.status(400).json({ message: "bad data"});
-
+    } else {
+      res.status(400).json({ message: "bad data" });
     }
   } catch (err) {
     res.status(500).json({ message: "server error", err: err.message });
