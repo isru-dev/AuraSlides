@@ -1,6 +1,10 @@
-import { useState } from "react"; 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import the hook
+
 
 export function Login() {
+    const navigate = useNavigate(); 
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const handleLogin = (e) => {
@@ -13,12 +17,21 @@ export function Login() {
       },
       body: JSON.stringify({
         email,
-        password, 
+        password,
       }),
     })
       .then((res) => res.json())
       .then((data) => {
         console.log(data);
+
+        if (data.success) {
+          localStorage.setItem("userToken", data.token);
+
+          // Go to dashboard
+          navigate("/chat");
+        } else {
+          alert(data.message);
+        }
       })
       .catch((err) => console.error(err));
   };

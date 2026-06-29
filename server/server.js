@@ -2,6 +2,8 @@ const express=require('express');
 const cors = require("cors");
 require("dotenv").config(); // Load environment keys first
 const authRoutes = require("./routes/authRoutes");
+const slideRoutes = require("./routes/slides.js");
+
 const mongoose = require('mongoose');
 const { connectDb } = require('./config/db.js');
 
@@ -11,6 +13,8 @@ app.use(express.json());
 app.use(cors());
 const PORT=process.env.PORT || 5000;
 app.use("/api/auth", authRoutes);
+app.use("/api",slideRoutes);
+
 app.get('/',(req,res)=>{
    res.send("hello from node js");
 });

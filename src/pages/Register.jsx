@@ -1,7 +1,7 @@
 import { useState } from "react"; 
 import { useNavigate } from 'react-router-dom'; // 1. Import the router hook
 
-export function Register() {
+export   function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -25,11 +25,7 @@ export function Register() {
   .then((res) => res.json())
   .then((data) => {
     console.log(data);
-  })
-  .catch((err) => console.error(err));
-  const data = await response.json();
-
-    if (data.success) {
+     if (data.success) {
       alert(data.message); // Optional: Shows "Registration successful! Please log in."
       
       // ✅ 3. Redirect the user's browser to the login page smoothly!
@@ -37,6 +33,10 @@ export function Register() {
     } else {
       alert(data.message); // Shows validation errors if signup failed
     }
+  })
+  .catch((err) => console.error(err));
+
+   
 };
   return (
     <section className="grid grid-cols-1 lg:grid-cols-2  mx-auto items-center min-h-screen px-6 gap-12 lg:gap-20 bg-[#050816]">
