@@ -169,7 +169,7 @@ export function Login() {
         <div className="text-center text-xs text-[#94A3B8] mt-2">
           Don't have an account?{" "}
           <a
-            href="/chat"
+            href="/register"
             className="text-[#06B6D4] font-medium hover:text-[#8B5CF6] transition-colors ml-1"
           >
             Sign Up
