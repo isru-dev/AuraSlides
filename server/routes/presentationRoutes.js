@@ -59,15 +59,15 @@ router.get("/", protect, async (req, res) => {
       owner: req.user.userId,
     });
     if (allPresentation.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No presentations found.",
+      return res.status(200).json({
+        success: true,
+        presentations: [],
       });
     }
 
     res.status(200).json({
       success: true,
-      presentations: allPresentations,
+      presentations: allPresentation,
     });
   } catch (err) {
     res.status(500).json({
@@ -79,10 +79,23 @@ router.get("/", protect, async (req, res) => {
 
 router.put("/:id", protect, async (req, res) => {
   try {
-    const presentation = await Presentation.findOneAndUpdate({
-      _id: req.params.id,
-      owner: req.user.userId,
-    });
+    const { title, prompt, slides, themeColor } = req.body;
+    const presentation = await Presentation.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        owner: req.user.userId,
+      },
+      {
+        title,
+        prompt,
+        slides,
+        themeColor,
+      },
+      {
+        new: true,
+      },
+    );
+
     if (!presentation) {
       return res.status(404).json({
         success: false,
@@ -92,7 +105,32 @@ router.put("/:id", protect, async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Presentation updated successfully.",
       presentation,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+//:id ->id presention id  req.user.id ->the user id
+router.delete("/:id", protect, async (req, res) => {
+  try {
+    const deletedPresentation = await Presentation.findOneAndDelete({
+      _id: req.params.id,
+      owner: req.user.userId,
+    });
+    if (!deletedPresentation) {
+      return res.status(404).json({
+        success: false,
+        message: "Presentation not found.",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Presentation deleted successfully.",
     });
   } catch (err) {
     res.status(500).json({
