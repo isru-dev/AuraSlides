@@ -1,45 +1,64 @@
-import { useState,useEffect} from "react";
+import { useState, useEffect } from "react";
 
 export function Chat() {
-  const [history,setHistory] = useState([]);
-  
+  const [history, setHistory] = useState([]);
+
   const [promptInput, setPromptInput] = useState("");
+  const [selectedPresentation, setSelectedPresentation] = useState(null);
 
   const handlePromptSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const token = localStorage.getItem("userToken");
+    const token = localStorage.getItem("userToken");
 
-  try {
-    const response = await fetch("http://localhost:5000/api/presentation", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    try {
+      const response = await fetch("http://localhost:5000/api/presentation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: promptInput,
+          prompt: promptInput,
+          slides: [],
+          themeColor: "#06B6D4",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Add the new presentation to the top of the sidebar
+        setHistory((prev) => [data.presentation, ...prev]);
+
+        // Clear the textarea
+        setPromptInput("");
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const handlePresentationClick = async (id) => {
+    const token = localStorage.getItem("userToken");
+
+    const response = await fetch(
+      `http://localhost:5000/api/presentation/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-      body: JSON.stringify({
-        title: promptInput,
-        prompt: promptInput,
-        slides: [],
-        themeColor: "#06B6D4",
-      }),
-    });
+    );
 
     const data = await response.json();
 
     if (data.success) {
-      // Add the new presentation to the top of the sidebar
-      setHistory((prev) => [data.presentation, ...prev]);
-
-      // Clear the textarea
-      setPromptInput("");
-    } else {
-      alert(data.message);
+      setSelectedPresentation(data.presentation);
     }
-  } catch (err) {
-    console.error(err);
-  }
-};
+  };
   const [sidebarOpen, setSidebarOpen] = useState(false);
   function handlemenu() {
     setSidebarOpen(true);
@@ -48,23 +67,23 @@ export function Chat() {
     setSidebarOpen(false);
   }
   useEffect(() => {
-  const token = localStorage.getItem("userToken");
+    const token = localStorage.getItem("userToken");
 
-  fetch("http://localhost:5000/api/presentation", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.success) {
-        setHistory(data.presentations);
-      } else {
-        console.log(data.message);
-    }
+    fetch("http://localhost:5000/api/presentation", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
-    .catch((err) => console.log(err));
-}, []);
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setHistory(data.presentations);
+        } else {
+          console.log(data.message);
+        }
+      })
+      .catch((err) => console.log(err));
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#050816] text-[#F8FAFC] flex font-sans select-none overflow-hidden">
@@ -91,7 +110,10 @@ export function Chat() {
               {history.map((item) => (
                 <button
                   key={item._id}
-                  onClick={closeMenu}
+                  onClick={() => {
+                    handlePresentationClick(item._id);
+                    closeMenu();
+                  }}
                   className="w-full text-left py-2.5 px-3 rounded-xl text-xs text-[#CBD5E1] hover:bg-[#111827]/60 hover:text-[#F8FAFC] transition-all cursor-pointer truncate flex items-center gap-2.5 group"
                 >
                   <span className="text-[#F8FAFC] group-hover:text-[#A78BFA] transition-colors">
@@ -204,6 +226,13 @@ export function Chat() {
         </header>
 
         <div className="hidden md:block h-16" />
+        {selectedPresentation && (
+    <div>
+        <h1>{selectedPresentation.title}</h1>
+
+        <p>{selectedPresentation.prompt}</p>
+    </div>
+)}
 
         <div className="w-full max-w-2xl flex flex-col items-center text-center gap-4 my-auto z-10">
           <div className="mb-2 px-3 py-1 rounded-full bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] text-[11px] text-[#67E8F9] font-medium tracking-wide shadow-sm animate-pulse">
