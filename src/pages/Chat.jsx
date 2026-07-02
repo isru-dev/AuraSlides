@@ -1,12 +1,7 @@
-import { useState } from "react";
+import { useState,useEffect} from "react";
 
 export function Chat() {
-  const [history] = useState([
-    "Artificial Intelligence Architecture",
-    "E-Commerce Growth Strategy 2026",
-    "Quantum Computing Simplified",
-    "Mobile App Pitch Deck v2",
-  ]);
+  const [history,setHistory] = useState([]);
   
   const [promptInput, setPromptInput] = useState("");
 
@@ -24,6 +19,25 @@ export function Chat() {
   function closeMenu() {
     setSidebarOpen(false);
   }
+  useEffect(() => {
+  const token = localStorage.getItem("userToken");
+
+  fetch("http://localhost:5000/api/presentation", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        setHistory(data.presentations);
+      } else {
+        console.log(data.message);
+    }
+    })
+    .catch((err) => console.log(err));
+}, []);
+
   return (
     <div className="min-h-screen bg-[#050816] text-[#F8FAFC] flex font-sans select-none overflow-hidden">
       <aside className="w-64 border-r border-[rgba(255,255,255,0.06)] bg-[#0B1220]/30 backdrop-blur-xl hidden md:flex flex-col p-4 justify-between">
@@ -46,16 +60,16 @@ export function Chat() {
               Recent Decks
             </span>
             <div className="flex flex-col gap-1 overflow-y-auto max-h-[50vh] pr-1 custom-scrollbar">
-              {history.map((item, idx) => (
+              {history.map((item) => (
                 <button
-                  key={idx}
+                  key={item._id}
                   onClick={closeMenu}
                   className="w-full text-left py-2.5 px-3 rounded-xl text-xs text-[#CBD5E1] hover:bg-[#111827]/60 hover:text-[#F8FAFC] transition-all cursor-pointer truncate flex items-center gap-2.5 group"
                 >
                   <span className="text-[#F8FAFC] group-hover:text-[#A78BFA] transition-colors">
                     💬
                   </span>
-                  <span className="truncate">{item}</span>
+                  <span className="truncate">{item.title}</span>
                 </button>
               ))}
             </div>
@@ -109,16 +123,16 @@ export function Chat() {
               Recent Decks
             </span>
             <div className="flex flex-col gap-1 overflow-y-auto max-h-[50vh] pr-1 custom-scrollbar">
-              {history.map((item, idx) => (
+              {history.map((item) => (
                 <button
-                  key={idx}
+                  key={item._id}
                   onClick={closeMenu}
                   className="w-full text-left py-2.5 px-3 rounded-xl text-xs text-[#CBD5E1] hover:bg-[#111827]/60 hover:text-[#F8FAFC] transition-all cursor-pointer truncate flex items-center gap-2.5 group"
                 >
                   <span className="text-[#F8FAFC] group-hover:text-[#A78BFA] transition-colors">
                     💬
                   </span>
-                  <span className="truncate">{item}</span>
+                  <span className="truncate">{item.title}</span>
                 </button>
               ))}
             </div>
