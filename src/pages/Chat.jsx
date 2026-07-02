@@ -5,13 +5,41 @@ export function Chat() {
   
   const [promptInput, setPromptInput] = useState("");
 
-  const handlePromptSubmit = (e) => {
-    e.preventDefault();
-    if (!promptInput.trim()) return;
+  const handlePromptSubmit = async (e) => {
+  e.preventDefault();
 
-    console.log("Prompt queued for AI processing:", promptInput);
-    setPromptInput("");
-  };
+  const token = localStorage.getItem("userToken");
+
+  try {
+    const response = await fetch("http://localhost:5000/api/presentation", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        title: promptInput,
+        prompt: promptInput,
+        slides: [],
+        themeColor: "#06B6D4",
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Add the new presentation to the top of the sidebar
+      setHistory((prev) => [data.presentation, ...prev]);
+
+      // Clear the textarea
+      setPromptInput("");
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
   const [sidebarOpen, setSidebarOpen] = useState(false);
   function handlemenu() {
     setSidebarOpen(true);

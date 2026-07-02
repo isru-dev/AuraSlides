@@ -57,7 +57,7 @@ router.get("/", protect, async (req, res) => {
   try {
     const allPresentation = await Presentation.find({
       owner: req.user.userId,
-    });
+    }).sort({ createdAt: -1 });
     if (allPresentation.length === 0) {
       return res.status(200).json({
         success: true,
