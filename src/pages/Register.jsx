@@ -1,43 +1,40 @@
-import { useState } from "react"; 
-import { useNavigate } from 'react-router-dom'; // 1. Import the router hook
+import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // 1. Import the router hook
 
-export   function Register() {
+export function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate(); // 2. Initialize the navigation function
 
-
   const handleRegister = (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  fetch("http://localhost:5000/api/auth/register", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    email,
-    password,
-    confirmPassword,
-  }),
-})
-  .then((res) => res.json())
-  .then((data) => {
-    console.log(data);
-     if (data.success) {
-      alert(data.message); // Optional: Shows "Registration successful! Please log in."
-      
-      // ✅ 3. Redirect the user's browser to the login page smoothly!
-      navigate('/login'); 
-    } else {
-      alert(data.message); // Shows validation errors if signup failed
-    }
-  })
-  .catch((err) => console.error(err));
+    fetch("http://localhost:5000/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        confirmPassword,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        if (data.success) {
+          alert(data.message); // Optional: Shows "Registration successful! Please log in."
 
-   
-};
+          // ✅ 3. Redirect the user's browser to the login page smoothly!
+          navigate("/login");
+        } else {
+          alert(data.message); // Shows validation errors if signup failed
+        }
+      })
+      .catch((err) => console.error(err));
+  };
   return (
     <section className="grid grid-cols-1 lg:grid-cols-2  mx-auto items-center min-h-screen px-6 gap-12 lg:gap-20 bg-[#050816]">
       <div className="flex flex-col justify-center py-8 lg:py-12 h-full order-2 lg:order-1 px-8">
@@ -86,7 +83,10 @@ export   function Register() {
           </h3>
         </div>
 
-        <button className="w-full bg-[#111827]/40 text-[#CBD5E1] border border-[rgba(255,255,255,0.06)] rounded-xl font-medium py-3 px-4 hover:bg-[#111827]/80 hover:text-[#F8FAFC] flex items-center justify-center gap-3 transition-all duration-200 cursor-pointer text-sm">
+        <button
+          className="w-full bg-[#111827]/40 text-[#CBD5E1] border border-[rgba(255,255,255,0.06)] rounded-xl font-medium py-3 px-4 hover:bg-[#111827]/80 hover:text-[#F8FAFC] flex items-center justify-center gap-3 transition-all duration-200 cursor-pointer text-sm"
+        
+        >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
@@ -165,7 +165,6 @@ export   function Register() {
 
           <button
             type="submit"
-
             className="w-full mt-2 bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white font-medium py-3 rounded-xl shadow-[0_4px_25px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_35px_rgba(139,92,246,0.3)] hover:scale-[1.01] transition-all duration-300 cursor-pointer text-sm"
           >
             Create Account

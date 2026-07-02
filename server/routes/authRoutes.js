@@ -4,6 +4,7 @@ const User = require("../models/authModels");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+
 router.get("/reg", (req, res) => {
   res.send("yes sir");
 });
