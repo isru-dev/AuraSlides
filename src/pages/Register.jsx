@@ -1,14 +1,47 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // 1. Import the router hook
+import { useNavigate } from "react-router-dom"; 
+// 1. Import useGoogleLogin hook
+import { useGoogleLogin } from '@react-oauth/google';
 
 export function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const navigate = useNavigate(); // 2. Initialize the navigation function
+  const navigate = useNavigate(); 
+
+  // 2. Configure the Google OAuth trigger for registration
+  const registerWithGoogle = useGoogleLogin({
+    flow: 'auth-code',
+    onSuccess: async (tokenResponse) => {
+      try {
+        const response = await fetch("http://localhost:5000/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: tokenResponse.code }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          localStorage.setItem("userToken", data.token);
+          // Redirect smoothly into the app workspace
+          navigate("/chat");
+        } else {
+          alert(data.message);
+        }
+      } catch (err) {
+        console.error("Google Registration Error:", err);
+      }
+    },
+    onError: (error) => console.error('Google Registration Failed:', error),
+  });
 
   const handleRegister = (e) => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
 
     fetch("http://localhost:5000/api/auth/register", {
       method: "POST",
@@ -25,18 +58,17 @@ export function Register() {
       .then((data) => {
         console.log(data);
         if (data.success) {
-          alert(data.message); // Optional: Shows "Registration successful! Please log in."
-
-          // ✅ 3. Redirect the user's browser to the login page smoothly!
+          alert(data.message); 
           navigate("/login");
         } else {
-          alert(data.message); // Shows validation errors if signup failed
+          alert(data.message); 
         }
       })
       .catch((err) => console.error(err));
   };
+
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-2  mx-auto items-center min-h-screen px-6 gap-12 lg:gap-20 bg-[#050816]">
+    <section className="grid grid-cols-1 lg:grid-cols-2 mx-auto items-center min-h-screen px-6 gap-12 lg:gap-20 bg-[#050816]">
       <div className="flex flex-col justify-center py-8 lg:py-12 h-full order-2 lg:order-1 px-8">
         <h1 className="bg-gradient-to-r from-[#67E8F9] via-[#A78BFA] to-[#C084FC] bg-clip-text text-transparent font-bold tracking-tight text-3xl mb-8 self-start">
           AuraSlides
@@ -53,8 +85,7 @@ export function Register() {
         </p>
 
         <p className="text-[#CBD5E1] text-base sm:text-lg mb-8 max-w-md leading-relaxed">
-          Generate beautiful slide decks, automatically structured and ready to
-          present.
+          Generate beautiful slide decks, automatically structured and ready to present.
         </p>
 
         <ul className="space-y-4 text-[#CBD5E1] font-medium text-sm sm:text-base">
@@ -83,9 +114,11 @@ export function Register() {
           </h3>
         </div>
 
+        {/* 3. Wire up the click function to your original styled button */}
         <button
+          type="button"
+          onClick={() => registerWithGoogle()}
           className="w-full bg-[#111827]/40 text-[#CBD5E1] border border-[rgba(255,255,255,0.06)] rounded-xl font-medium py-3 px-4 hover:bg-[#111827]/80 hover:text-[#F8FAFC] flex items-center justify-center gap-3 transition-all duration-200 cursor-pointer text-sm"
-        
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path

@@ -1,12 +1,40 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import the hook
-
+import { useNavigate } from "react-router-dom";
+// 1. Import useGoogleLogin instead of the default button component
+import { useGoogleLogin } from '@react-oauth/google';
 
 export function Login() {
-    const navigate = useNavigate(); 
+  const navigate = useNavigate(); 
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // 2. Configure the Google login custom trigger hook using the auth-code flow
+  const loginWithGoogle = useGoogleLogin({
+    flow: 'auth-code', 
+    onSuccess: async (tokenResponse) => {
+      try {
+        // Send the authorization code to your Express server
+        const response = await fetch("http://localhost:5000/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: tokenResponse.code }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          localStorage.setItem("userToken", data.token);
+          navigate("/chat");
+        } else {
+          alert(data.message);
+        }
+      } catch (err) {
+        console.error("Google Login Error:", err);
+      }
+    },
+    onError: (error) => console.error('Google Login Failed:', error),
+  });
+
   const handleLogin = (e) => {
     e.preventDefault();
 
@@ -26,8 +54,6 @@ export function Login() {
 
         if (data.success) {
           localStorage.setItem("userToken", data.token);
-
-          // Go to dashboard
           navigate("/chat");
         } else {
           alert(data.message);
@@ -35,8 +61,9 @@ export function Login() {
       })
       .catch((err) => console.error(err));
   };
+
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-2  mx-auto items-center min-h-screen px-8 lg:px-20 gap-10 lg:gap-4 bg-[#050816] sm:pt-10">
+    <section className="grid grid-cols-1 lg:grid-cols-2 mx-auto items-center min-h-screen px-8 lg:px-20 gap-10 lg:gap-4 bg-[#050816] sm:pt-10">
       <div className="flex flex-col justify-center py-8 lg:py-12 h-full order-2 lg:order-1 px-4">
         <h1 className="bg-gradient-to-r from-[#67E8F9] via-[#A78BFA] to-[#C084FC] bg-clip-text text-transparent font-bold tracking-tight text-3xl mb-8 self-start">
           AuraSlides
@@ -52,13 +79,10 @@ export function Login() {
           </span>
         </p>
 
-        {/* Secondary Text (#CBD5E1) Subtitle */}
         <p className="text-[#CBD5E1] text-base sm:text-lg mb-8 max-w-md leading-relaxed">
-          Generate beautiful slide decks, automatically structured and ready to
-          present.
+          Generate beautiful slide decks, automatically structured and ready to present.
         </p>
 
-        {/* Value Bullet Points using Secondary Text */}
         <ul className="space-y-4 text-[#CBD5E1] font-medium text-sm sm:text-base">
           <li className="flex items-center">
             <span className="text-[#67E8F9] mr-3 text-lg">✓</span>
@@ -85,7 +109,12 @@ export function Login() {
           </h3>
         </div>
 
-        <button className="w-full bg-[#111827]/40 text-[#CBD5E1] border border-[rgba(255,255,255,0.06)] rounded-xl font-medium py-3 px-4 hover:bg-[#111827]/80 hover:text-[#F8FAFC] flex items-center justify-center gap-3 transition-all duration-200 cursor-pointer text-sm">
+        {/* 3. Attached the click hook handler to your custom styled button */}
+        <button 
+          type="button"
+          onClick={() => loginWithGoogle()}
+          className="w-full bg-[#111827]/40 text-[#CBD5E1] border border-[rgba(255,255,255,0.06)] rounded-xl font-medium py-3 px-4 hover:bg-[#111827]/80 hover:text-[#F8FAFC] flex items-center justify-center gap-3 transition-all duration-200 cursor-pointer text-sm"
+        >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
@@ -115,12 +144,7 @@ export function Login() {
           <div className="flex-1 border-t border-[rgba(255,255,255,0.06)]"></div>
         </div>
 
-        <form
-          method="post"
-          className="flex flex-col gap-4.5"
-          onSubmit={handleLogin}
-        >
-          {/* Email Address */}
+        <form method="post" className="flex flex-col gap-4.5" onSubmit={handleLogin}>
           <div className="flex flex-col gap-1.5">
             <label className="text-[#94A3B8] text-xs font-medium uppercase tracking-wider">
               Email Address
@@ -135,16 +159,12 @@ export function Login() {
             />
           </div>
 
-          {/* Password */}
           <div className="flex flex-col gap-1.5">
             <div className="flex justify-between items-center">
               <label className="text-[#94A3B8] text-xs font-medium uppercase tracking-wider">
                 Password
               </label>
-              <a
-                href="/forgot-password"
-                className="text-xs text-[#06B6D4] hover:text-[#8B5CF6] transition-colors"
-              >
+              <a href="/forgot-password" className="text-xs text-[#06B6D4] hover:text-[#8B5CF6] transition-colors">
                 Forgot password?
               </a>
             </div>
@@ -168,10 +188,7 @@ export function Login() {
 
         <div className="text-center text-xs text-[#94A3B8] mt-2">
           Don't have an account?{" "}
-          <a
-            href="/register"
-            className="text-[#06B6D4] font-medium hover:text-[#8B5CF6] transition-colors ml-1"
-          >
+          <a href="/register" className="text-[#06B6D4] font-medium hover:text-[#8B5CF6] transition-colors ml-1">
             Sign Up
           </a>
         </div>
