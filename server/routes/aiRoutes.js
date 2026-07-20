@@ -12,10 +12,45 @@ router.post("/generate", async (req, res) => {
         message: "Prompt is required.",
       });
     }
+  const aiPrompt = `
+You are an expert presentation designer.
+
+Create a presentation about:
+
+"${prompt}"
+
+Rules:
+
+- Generate exactly 5 slides.
+- Return ONLY valid JSON.
+- Do not use markdown.
+- Do not wrap the JSON inside \`\`\`.
+- Each slide must have:
+  - slideNumber
+  - title
+  - content (array of bullet points)
+
+Return this exact format:
+
+{
+  "title": "Presentation Title",
+  "slides": [
+    {
+      "slideNumber": 1,
+      "title": "Slide title",
+      "content": [
+        "Point 1",
+        "Point 2",
+        "Point 3"
+      ]
+    }
+  ]
+}
+`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: prompt,
+      contents: aiPrompt,
     });
 
     return res.json({

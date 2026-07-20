@@ -4,8 +4,11 @@ const router = express.Router();
 const { OAuth2Client } = require('google-auth-library'); 
 const User = require('../models/authModels.js');
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
+const client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  'postmessage'
+);
 router.post("/", async (req, res) => {
   // 2. Expect "code" from the body payload instead of "token"
   const { code } = req.body;
@@ -14,6 +17,7 @@ router.post("/", async (req, res) => {
     // 3. Trade the authorization code for real token payloads
     const { tokens } = await client.getToken({
       code: code,
+  
       redirect_uri: 'postmessage' // Vital flag matching the popup source execution context
     });
 
