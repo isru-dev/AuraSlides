@@ -12,6 +12,9 @@ router.post("/generate", async (req, res) => {
         message: "Prompt is required.",
       });
     }
+;
+    
+
   const aiPrompt = `
 You are an expert presentation designer.
 

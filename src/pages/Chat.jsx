@@ -13,33 +13,68 @@ export function Chat() {
     const token = localStorage.getItem("userToken");
 
     try {
-      const response = await fetch("http://localhost:5000/api/presentation", {
+      // Step 1: Call AI to generate slides
+      console.log("Generating slides from prompt...");
+      const aiResponse = await fetch("http://localhost:5000/api/ai/generate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: promptInput,
-          prompt: promptInput,
-          slides: [],
-          themeColor: "#06B6D4",
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: promptInput }),
       });
 
-      const data = await response.json();
+      const aiData = await aiResponse.json();
 
-      if (data.success) {
+      if (!aiData.success) {
+        alert("Failed to generate slides: " + aiData.message);
+        return;
+      }
+
+      // Step 2: Parse AI response (it returns JSON as string)
+      let generatedSlides = [];
+      try {
+        const parsedAI = JSON.parse(aiData.result);
+        generatedSlides = parsedAI.slides || [];
+        console.log("Generated slides:", generatedSlides);
+      } catch (parseErr) {
+        console.error("Failed to parse AI response:", parseErr);
+        alert("Failed to parse AI response");
+        return;
+      }
+
+      // Step 3: Create presentation with generated slides
+      const presentationResponse = await fetch(
+        "http://localhost:5000/api/presentation",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: promptInput,
+            prompt: promptInput,
+            slides: generatedSlides, // ✅ Now with real slides!
+            themeColor: "#06B6D4",
+          }),
+        },
+      );
+
+      const presentationData = await presentationResponse.json();
+
+      if (presentationData.success) {
         // Add the new presentation to the top of the sidebar
-        setHistory((prev) => [data.presentation, ...prev]);
+        setHistory((prev) => [presentationData.presentation, ...prev]);
+
+        // Auto-select the new presentation to display it
+        setSelectedPresentation(presentationData.presentation);
 
         // Clear the textarea
         setPromptInput("");
       } else {
-        alert(data.message);
+        alert(presentationData.message);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Error:", err);
+      alert("An error occurred: " + err.message);
     }
   };
   const handlePresentationClick = async (id) => {
@@ -267,10 +302,46 @@ export function Chat() {
 
         <div className="hidden md:block h-16" />
         {selectedPresentation && (
-          <div>
-            <h1>{selectedPresentation.title}</h1>
+          <div className="w-full max-w-4xl z-10">
+            <div className="bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl p-8">
+              {/* Presentation Title */}
+              <h1 className="text-3xl font-bold text-[#F8FAFC] mb-2">
+                {selectedPresentation.title}
+              </h1>
 
-            <p>{selectedPresentation.prompt}</p>
+              {/* Display Slides */}
+              <div className="space-y-6">
+                {selectedPresentation.slides &&
+                selectedPresentation.slides.length > 0 ? (
+                  selectedPresentation.slides.map((slide, index) => (
+                    <div
+                      key={index}
+                      className="bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] rounded-xl p-6 hover:border-[#06B6D4]/30 transition-all"
+                    >
+                      {/* Slide Title */}
+                      <h2 className="text-xl font-bold text-[#67E8F9] mb-4">
+                        Slide {slide.slideNumber}: {slide.title}
+                      </h2>
+                      {/* Slide Content */}
+                      <ul className="space-y-2">
+                        {slide.content &&
+                          slide.content.map((point, idx) => (
+                            <li
+                              key={idx}
+                              className="text-[#CBD5E1] flex items-start gap-3"
+                            >
+                              <span className="text-[#06B6D4] mt-1">•</span>
+                              <span>{point}</span>
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-[#94A3B8]">No slides generated yet</p>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

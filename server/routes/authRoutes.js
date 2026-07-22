@@ -97,7 +97,7 @@ router.post("/login", async (req, res) => {
       const token = jwt.sign(
         { id: findUser._id, name: findUser.name,  email: findUser.email }, // Payload: Data to hide in the token
         process.env.JWT_SECRET,
-        { expiresIn: "1h" }, // Options: Token expires in 1 hour
+        { expiresIn: "7D" }, // Options: Token expires in 1 hour
       );
         
       // 3. Send the token back to React
@@ -145,6 +145,26 @@ router.get("/me", protect, async (req, res) => {
     return res.status(400).json({ 
       success: false, 
       message: "Failed to fetch user" 
+    });
+  }
+});
+
+router.patch("/fix-names", async (req, res) => {
+  try {
+    const result = await User.updateMany(
+      { name: null },
+      { $set: { name: "User" } }
+    );
+    res.json({ 
+      success: true,
+      message: "Fixed names",
+      updatedCount: result.modifiedCount  // How many users were updated
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: "Error fixing names",
+      error: error.message 
     });
   }
 });

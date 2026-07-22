@@ -28,15 +28,25 @@ router.post("/", async (req, res) => {
     });
 
     const { name, email } = ticket.getPayload();
+    console.log("Google payload:", { name, email });  // ← Add this line
 
     // Check if user exists, or create a brand new one instantly
     let user = await User.findOne({ email });
+   console.log("Creating user:", { name, email });  // ← Add this too
+
     if (!user) {
       user = await User.create({
         name,
         email,
         password: Math.random().toString(36).slice(-8) + Date.now().toString(),
       });
+    }else {
+      // Update existing user with latest name from Google
+      user = await User.findByIdAndUpdate(
+        user._id,
+        { name },  // ← Update name
+        { new: true }
+      );
     }
 
     // Issue your native application JWT token

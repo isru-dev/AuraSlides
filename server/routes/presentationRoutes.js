@@ -9,7 +9,7 @@ router.post("/", protect, async (req, res) => {
     const { title, prompt, slides, themeColor } = req.body;
 
     const presentation = await Presentation.create({
-      owner: req.user.userId,
+      owner: req.user.id,
       title,
       prompt,
       slides,
@@ -31,8 +31,8 @@ router.post("/", protect, async (req, res) => {
 router.get("/:id", protect, async (req, res) => {
   try {
     const presentation = await Presentation.findOne({
-      _id: req.params.id,
-      owner: req.user.userId,
+      _id: req.params.id,//presenation id
+      owner: req.user.id, // person id
     });
     if (!presentation) {
       return res.status(404).json({
@@ -56,7 +56,7 @@ router.get("/:id", protect, async (req, res) => {
 router.get("/", protect, async (req, res) => {
   try {
     const allPresentation = await Presentation.find({
-      owner: req.user.userId,
+      owner: req.user.id,
     }).sort({ createdAt: -1 });
     if (allPresentation.length === 0) {
       return res.status(200).json({
@@ -83,7 +83,7 @@ router.put("/:id", protect, async (req, res) => {
     const presentation = await Presentation.findOneAndUpdate(
       {
         _id: req.params.id,
-        owner: req.user.userId,
+        owner: req.user.id,
       },
       {
         title,
@@ -120,7 +120,7 @@ router.delete("/:id", protect, async (req, res) => {
   try {
     const deletedPresentation = await Presentation.findOneAndDelete({
       _id: req.params.id,
-      owner: req.user.userId,
+      owner: req.user.id,
     });
     if (!deletedPresentation) {
       return res.status(404).json({
