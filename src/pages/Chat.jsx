@@ -345,24 +345,27 @@ export function Chat() {
           </div>
         )}
 
-        <div className="w-full max-w-2xl flex flex-col items-center text-center gap-4 my-auto z-10">
-          <div className="mb-2 px-3 py-1 rounded-full bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] text-[11px] text-[#67E8F9] font-medium tracking-wide shadow-sm animate-pulse">
-            ✨ Engine Status: Operational
+        {/* Hide this when slides are displayed */}
+        {!selectedPresentation && (
+          <div className="w-full max-w-2xl flex flex-col items-center text-center gap-4 my-auto z-10">
+            <div className="mb-2 px-3 py-1 rounded-full bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] text-[11px] text-[#67E8F9] font-medium tracking-wide shadow-sm animate-pulse">
+              ✨ Engine Status: Operational
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] tracking-tight leading-tight">
+              What are we presenting
+              <br />
+              <span className="bg-gradient-to-r from-[#67E8F9] via-[#A78BFA] to-[#C084FC] bg-clip-text text-transparent">
+                today?
+              </span>
+            </h2>
+            <p className="text-[#94A3B8] text-sm max-w-md leading-relaxed mt-1">
+              Input a concept, text snippet, or architecture topic, and let Aura
+              generate structured, export-ready slides in seconds.
+            </p>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] tracking-tight leading-tight">
-            What are we presenting
-            <br />
-            <span className="bg-gradient-to-r from-[#67E8F9] via-[#A78BFA] to-[#C084FC] bg-clip-text text-transparent">
-              today?
-            </span>
-          </h2>
-          <p className="text-[#94A3B8] text-sm max-w-md leading-relaxed mt-1">
-            Input a concept, text snippet, or architecture topic, and let Aura
-            generate structured, export-ready slides in seconds.
-          </p>
-        </div>
+        )}
 
-        <div className="w-full max-w-2xl pb-8 sm:pb-12 z-10">
+        <div className="w-full max-w-2xl pb-8 sm:pb-12 z-10  mt-[40px]">
           <form
             onSubmit={handlePromptSubmit}
             className="w-full bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-2xl rounded-2xl p-2.5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] flex flex-col gap-2.5 focus-within:border-[#06B6D4]/40 focus-within:ring-1 focus-within:ring-[#06B6D4]/10 transition-all duration-300"

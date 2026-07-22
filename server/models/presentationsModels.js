@@ -4,7 +4,7 @@ const presentationsSchema = new mongoose.Schema(
   {
     owner: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // References your user model file name
+      ref: "User",
       required: true,
     },
 
@@ -14,6 +14,7 @@ const presentationsSchema = new mongoose.Schema(
       trim: true,
       maxlength: 100,
     },
+
     slides: [
       {
         slideNumber: {
@@ -25,29 +26,51 @@ const presentationsSchema = new mongoose.Schema(
           default: "Untitled Slide",
         },
         content: {
-          type: [String], // Array of bullet points or text blocks
+          type: [String],
           default: [],
         },
         layoutType: {
           type: String,
-          enum: ["title-only", "split-screen", "bullet-list", "minimalist"], // Matches layout options
+          enum: ["title-only", "split-screen", "bullet-list", "minimalist"],
           default: "bullet-list",
         },
       },
     ],
+
     prompt: {
       type: String,
       required: true,
     },
+
     status: {
       type: String,
       enum: ["pending", "generating", "completed", "failed"],
       default: "pending",
-    }, // 4. DESIGN PREFERENCES
+    },
+
     themeColor: {
       type: String,
-      default: "#06B6D4", // Default AuraSlides cyan color accent
-    }
+      default: "#06B6D4",
+    },
+
+    // ← NEW: Chat history
+    messages: [
+      {
+        role: {
+          type: String,
+          enum: ["user", "assistant"],
+          required: true,
+        },
+        content: {
+          type: String,
+          required: true,
+        },
+        timestamp: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
