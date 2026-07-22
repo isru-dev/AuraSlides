@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 
 export function Chat() {
   const [history, setHistory] = useState([]);
-
   const [promptInput, setPromptInput] = useState("");
   const [selectedPresentation, setSelectedPresentation] = useState(null);
+  const [user, setUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true); // ← Add loading state
 
   const handlePromptSubmit = async (e) => {
     e.preventDefault();
@@ -84,7 +85,38 @@ export function Chat() {
       })
       .catch((err) => console.log(err));
   }, []);
+  useEffect(() => {
+    const token = localStorage.getItem("userToken");
 
+    // Check if token exists
+    if (!token) {
+      setUserLoading(false);
+      return; // Don't fetch if no token
+    }
+
+    fetch("http://localhost:5000/api/auth/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          console.log("User data received:", data); // ← Add this line
+
+          setUser(data.user); // ← Only set if successful
+        } else {
+          console.error("Failed to fetch user:", data.message);
+          // Optionally redirect to login if unauthorized
+        }
+      })
+      .catch((err) => {
+        console.error("User fetch error:", err);
+      })
+      .finally(() => {
+        setUserLoading(false); // ← Stop loading regardless
+      });
+  }, []);
   return (
     <div className="min-h-screen bg-[#050816] text-[#F8FAFC] flex font-sans select-none overflow-hidden">
       <aside className="w-64 border-r border-[rgba(255,255,255,0.06)] bg-[#0B1220]/30 backdrop-blur-xl hidden md:flex flex-col p-4 justify-between">
@@ -129,14 +161,22 @@ export function Chat() {
         <div className="border-t border-[rgba(255,255,255,0.06)] pt-4 flex items-center justify-between px-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#06B6D4] to-[#8B5CF6] flex items-center justify-center text-xs font-bold text-white shadow-md shadow-[#06B6D4]/10 flex-shrink-0">
-              IG
+              {/* Generate initials from user's name */}
+              {user?.name
+                ? user.name
+                    .split(" ")
+                    .map((word) => word[0])
+                    .join("")
+                    .toUpperCase()
+                    .slice(0, 2)
+                : "U"}
             </div>
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-medium text-[#F8FAFC] truncate">
-                Israel Gezahegn
+                {userLoading ? "Loading..." : user?.name || "Guest"}
               </span>
               <span className="text-[10px] text-[#94A3B8] truncate">
-                Premium Member
+                {user?.email || ""}
               </span>
             </div>
           </div>
@@ -227,12 +267,12 @@ export function Chat() {
 
         <div className="hidden md:block h-16" />
         {selectedPresentation && (
-    <div>
-        <h1>{selectedPresentation.title}</h1>
+          <div>
+            <h1>{selectedPresentation.title}</h1>
 
-        <p>{selectedPresentation.prompt}</p>
-    </div>
-)}
+            <p>{selectedPresentation.prompt}</p>
+          </div>
+        )}
 
         <div className="w-full max-w-2xl flex flex-col items-center text-center gap-4 my-auto z-10">
           <div className="mb-2 px-3 py-1 rounded-full bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] text-[11px] text-[#67E8F9] font-medium tracking-wide shadow-sm animate-pulse">

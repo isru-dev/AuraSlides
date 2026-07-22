@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useGoogleLogin } from '@react-oauth/google';
 
 export function Register() {
+    const [fullName, setFullName] = useState("");  // ← Add this state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -37,6 +38,10 @@ export function Register() {
 
   const handleRegister = (e) => {
     e.preventDefault();
+     if (!fullName.trim()) {  // ← Validate name
+      alert("Full name is required!");
+      return;
+    }
 
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
@@ -49,6 +54,7 @@ export function Register() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        name: fullName,      // ← Now it exists!
         email,
         password,
         confirmPassword,
@@ -149,61 +155,75 @@ export function Register() {
           <div className="flex-1 border-t border-[rgba(255,255,255,0.06)]"></div>
         </div>
 
-        <form
-          method="post"
-          className="flex flex-col gap-4.5"
-          onSubmit={handleRegister}
-        >
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[#94A3B8] text-xs font-medium uppercase tracking-wider">
-              Email Address
-            </label>
-            <input
-              type="email"
-              required
-              placeholder="name@domain.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-[#111827]/80 border border-[rgba(255,255,255,0.06)] text-[#F8FAFC] placeholder-[#94A3B8]/40 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-[#06B6D4]/60 focus:ring-1 focus:ring-[#06B6D4]/30 transition-all duration-200"
-            />
-          </div>
+       <form className="flex flex-col gap-4.5" onSubmit={handleRegister}>
+  {/* Full Name Field */}
+  <div className="flex flex-col gap-1.5">
+    <label className="text-[#94A3B8] text-xs font-medium uppercase tracking-wider">
+      Full Name
+    </label>
+    <input
+      type="text"
+      required
+      placeholder="John Doe"
+      value={fullName}
+      onChange={(e) => setFullName(e.target.value)}
+      className="bg-[#111827]/80 border border-[rgba(255,255,255,0.06)] text-[#F8FAFC] placeholder-[#94A3B8]/40 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-[#06B6D4]/60 focus:ring-1 focus:ring-[#06B6D4]/30 transition-all duration-200"
+    />
+  </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[#94A3B8] text-xs font-medium uppercase tracking-wider">
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="bg-[#111827]/80 border border-[rgba(255,255,255,0.06)] text-[#F8FAFC] placeholder-[#94A3B8]/40 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-[#06B6D4]/60 focus:ring-1 focus:ring-[#06B6D4]/30 transition-all duration-200"
-            />
-          </div>
+  {/* Email Field */}
+  <div className="flex flex-col gap-1.5">
+    <label className="text-[#94A3B8] text-xs font-medium uppercase tracking-wider">
+      Email Address
+    </label>
+    <input
+      type="email"
+      required
+      placeholder="name@domain.com"
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+      className="bg-[#111827]/80 border border-[rgba(255,255,255,0.06)] text-[#F8FAFC] placeholder-[#94A3B8]/40 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-[#06B6D4]/60 focus:ring-1 focus:ring-[#06B6D4]/30 transition-all duration-200"
+    />
+  </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[#94A3B8] text-xs font-medium uppercase tracking-wider">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              required
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="bg-[#111827]/80 border border-[rgba(255,255,255,0.06)] text-[#F8FAFC] placeholder-[#94A3B8]/40 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-[#06B6D4]/60 focus:ring-1 focus:ring-[#06B6D4]/30 transition-all duration-200"
-            />
-          </div>
+  {/* Password Field */}
+  <div className="flex flex-col gap-1.5">
+    <label className="text-[#94A3B8] text-xs font-medium uppercase tracking-wider">
+      Password
+    </label>
+    <input
+      type="password"
+      required
+      placeholder="••••••••"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      className="bg-[#111827]/80 border border-[rgba(255,255,255,0.06)] text-[#F8FAFC] placeholder-[#94A3B8]/40 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-[#06B6D4]/60 focus:ring-1 focus:ring-[#06B6D4]/30 transition-all duration-200"
+    />
+  </div>
 
-          <button
-            type="submit"
-            className="w-full mt-2 bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white font-medium py-3 rounded-xl shadow-[0_4px_25px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_35px_rgba(139,92,246,0.3)] hover:scale-[1.01] transition-all duration-300 cursor-pointer text-sm"
-          >
-            Create Account
-          </button>
-        </form>
+  {/* Confirm Password Field */}
+  <div className="flex flex-col gap-1.5">
+    <label className="text-[#94A3B8] text-xs font-medium uppercase tracking-wider">
+      Confirm Password
+    </label>
+    <input
+      type="password"
+      required
+      placeholder="••••••••"
+      value={confirmPassword}
+      onChange={(e) => setConfirmPassword(e.target.value)}
+      className="bg-[#111827]/80 border border-[rgba(255,255,255,0.06)] text-[#F8FAFC] placeholder-[#94A3B8]/40 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-[#06B6D4]/60 focus:ring-1 focus:ring-[#06B6D4]/30 transition-all duration-200"
+    />
+  </div>
 
+  {/* Submit Button */}
+  <button
+    type="submit"
+    className="w-full mt-2 bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white font-medium py-3 rounded-xl shadow-[0_4px_25px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_35px_rgba(139,92,246,0.3)] hover:scale-[1.01] transition-all duration-300 cursor-pointer text-sm"
+  >
+    Create Account
+  </button>
+</form>
         <div className="text-center text-xs text-[#94A3B8] mt-2">
           Already have an account?{" "}
           <a
