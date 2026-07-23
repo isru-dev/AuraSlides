@@ -7,7 +7,7 @@ export function Chat() {
   const [promptInput, setPromptInput] = useState("");
   const [selectedPresentation, setSelectedPresentation] = useState(null);
   const [user, setUser] = useState(null);
-  const [userLoading, setUserLoading] = useState(true); // ← Add loading state
+  const [userLoading, setUserLoading] = useState(true);
   const [chatInput, setChatInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -15,7 +15,6 @@ export function Chat() {
   const [showSettings, setShowSettings] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -52,7 +51,7 @@ export function Chat() {
 
       // Send to backend
       const response = await fetch(
-        `http://localhost:5000/api/presentation/${selectedPresentation._id}/chat`,
+        `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}/chat`,
         {
           method: "POST",
           headers: {
@@ -88,11 +87,14 @@ export function Chat() {
     try {
       // Step 1: Call AI to generate slides
       console.log("Generating slides from prompt...");
-      const aiResponse = await fetch("http://localhost:5000/api/ai/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: promptInput }),
-      });
+      const aiResponse = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/ai/generate`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: promptInput }),
+        },
+      );
 
       const aiData = await aiResponse.json();
 
@@ -108,7 +110,7 @@ export function Chat() {
       console.log("Generated slides:", generatedSlides);
       // Step 3: Create presentation with generated slides
       const presentationResponse = await fetch(
-        "http://localhost:5000/api/presentation",
+        `${import.meta.env.VITE_API_URL}/api/presentation`,
         {
           method: "POST",
           headers: {
@@ -149,7 +151,7 @@ export function Chat() {
     const token = localStorage.getItem("userToken");
 
     const response = await fetch(
-      `http://localhost:5000/api/presentation/${id}`,
+      `${import.meta.env.VITE_API_URL}/api/presentation/${id}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -173,7 +175,7 @@ export function Chat() {
   useEffect(() => {
     const token = localStorage.getItem("userToken");
 
-    fetch("http://localhost:5000/api/presentation", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/presentation`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -197,7 +199,7 @@ export function Chat() {
       return; // Don't fetch if no token
     }
 
-    fetch("http://localhost:5000/api/auth/me", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -233,7 +235,7 @@ export function Chat() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/presentation/${presentationId}`,
+        `${import.meta.env.VITE_API_URL}/api/presentation/${presentationId}`,
         {
           method: "DELETE",
           headers: {
@@ -272,7 +274,7 @@ export function Chat() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/presentation/${presentationId}`,
+        `${import.meta.env.VITE_API_URL}/api/presentation/${presentationId}`,
         {
           method: "PUT",
           headers: {

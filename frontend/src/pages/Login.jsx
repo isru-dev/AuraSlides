@@ -15,7 +15,7 @@ export function Login() {
     onSuccess: async (tokenResponse) => {
       try {
         // Send the authorization code to your Express server
-        const response = await fetch("http://localhost:5000/api/auth/google", {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/google`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ code: tokenResponse.code }),
@@ -38,7 +38,7 @@ export function Login() {
   const handleLogin = (e) => {
     e.preventDefault();
 
-    fetch("http://localhost:5000/api/auth/login", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
