@@ -15,6 +15,7 @@ export function Chat() {
   const [showSettings, setShowSettings] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -100,18 +101,11 @@ export function Chat() {
         return;
       }
 
-      // Step 2: Parse AI response (it returns JSON as string)
-      let generatedSlides = [];
-      try {
-        const parsedAI = JSON.parse(aiData.result);
-        generatedSlides = parsedAI.slides || [];
-        console.log("Generated slides:", generatedSlides);
-      } catch (parseErr) {
-        console.error("Failed to parse AI response:", parseErr);
-        alert("Failed to parse AI response");
-        return;
-      }
+      // Step 2: Get generated slides
+      const generatedSlides = aiData.result.slides || [];
+      const generatedTitle = aiData.result.title || promptInput;
 
+      console.log("Generated slides:", generatedSlides);
       // Step 3: Create presentation with generated slides
       const presentationResponse = await fetch(
         "http://localhost:5000/api/presentation",
@@ -122,9 +116,9 @@ export function Chat() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            title: promptInput,
+            title: generatedTitle,
             prompt: promptInput,
-            slides: generatedSlides, // ✅ Now with real slides!
+            slides: generatedSlides,
             themeColor: "#06B6D4",
           }),
         },

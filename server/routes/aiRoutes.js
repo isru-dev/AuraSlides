@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const ai = require("../config/gemini");
-
+const ai = require("../services/aiProvider");
 
 router.post("/generate", async (req, res) => {
   try {
@@ -62,17 +61,24 @@ Return this exact format:
 }
 `;
 
-    console.log("Sending to Gemini...");
-         
-    const result = await ai.generateContent(aiPrompt);
+const text = await ai.generate(aiPrompt);
+ let parsedResponse;
 
-    const text = result.response.text();
+    try {
+       parsedResponse  = JSON.parse(text);
+    } catch (err) {
+      console.error("JSON Parse Error:", err);
 
-    console.log(text);
+      return res.status(500).json({
+        success: false,
+       message: "AI returned invalid JSON.",
+        raw: text,
+      });
+    }
 
     return res.json({
       success: true,
-      result: text,
+      result: parsedResponse,
     });
   } catch (err) {
     console.error("Generate error:", err);

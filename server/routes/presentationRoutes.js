@@ -141,8 +141,6 @@ router.delete("/:id", protect, async (req, res) => {
   }
 });
 
-
-
 router.post("/:id/chat", protect, async (req, res) => {
   try {
     const { message } = req.body;
@@ -154,8 +152,8 @@ router.post("/:id/chat", protect, async (req, res) => {
         message: "Message is required.",
       });
     }
-   console.log("Presentation ID:", presentationId);
-console.log("User ID:", req.user.userId);
+    console.log("Presentation ID:", presentationId);
+    console.log("User ID:", req.user.id);
     const presentation = await Presentation.findOne({
       _id: presentationId,
       owner: req.user.id,
@@ -186,9 +184,7 @@ Current Slides:
 ${JSON.stringify(presentation.slides, null, 2)}
 
 Conversation History:
-${presentation.messages
-  .map((msg) => `${msg.role}: ${msg.content}`)
-  .join("\n")}
+${presentation.messages.map((msg) => `${msg.role}: ${msg.content}`).join("\n")}
 
 User Request:
 ${message}
@@ -214,30 +210,23 @@ Format:
   ]
 }
 `;
+    console.log("Sending request to AI Provider...");
 
-    console.log("Sending request to Gemini...");
+    const aiText = await ai.generate(aiPrompt);
 
-    const result = await ai.generateContent(aiPrompt);
-    const aiText = result.response.text();
-
-    console.log("Raw Gemini response:");
+    console.log("Raw AI response:");
     console.log(aiText);
 
     let parsedResponse;
 
     try {
-      const cleanText = aiText
-        .replace(/```json\s*/g, "")
-        .replace(/```\s*/g, "")
-        .trim();
-
-      parsedResponse = JSON.parse(cleanText);
+       parsedResponse  = JSON.parse(aiText);
     } catch (err) {
       console.error("JSON Parse Error:", err);
 
       return res.status(500).json({
         success: false,
-        message: "Gemini returned invalid JSON.",
+       message: "AI returned invalid JSON.",
         raw: aiText,
       });
     }
@@ -249,8 +238,7 @@ Format:
     presentation.messages.push({
       role: "assistant",
       content:
-        parsedResponse.reply ||
-        "I've updated your presentation successfully.",
+        parsedResponse.reply || "I've updated your presentation successfully.",
     });
 
     presentation.status = "completed";
@@ -271,4 +259,4 @@ Format:
   }
 });
 
-module.exports=router;
+module.exports = router;

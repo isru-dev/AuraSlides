@@ -2,20 +2,30 @@ const gemini = require("./geminiService");
 const groq = require("./groqService");
 
 async function generate(prompt) {
+  let text;
+
   try {
     console.log("Using Gemini...");
-    return await gemini.generate(prompt);
+    text = await gemini.generate(prompt);
   } catch (err) {
-    console.error("Gemini Error:", err.message);
+    console.error("Gemini failed:", err.message);
 
-    // Fallback on rate limit
-    if (err.status === 429) {
+    if (
+      err.status === 429 ||
+      err.status === 500 ||
+      err.status === 503
+    ) {
       console.log("Switching to Groq...");
-      return await groq.generate(prompt);
+      text = await groq.generate(prompt);
+    } else {
+      throw err;
     }
-
-    throw err;
   }
+
+  return text
+    .replace(/```json\s*/g, "")
+    .replace(/```\s*/g, "")
+    .trim();
 }
 
 module.exports = {
