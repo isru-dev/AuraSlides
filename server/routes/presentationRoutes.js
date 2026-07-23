@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const ai = require("../config/gemini");
+const ai = require("../services/aiProvider");
 
 const Presentation = require("../models/presentationsModels.js");
 const protect = require("../middleware/authMiddleware.js");
