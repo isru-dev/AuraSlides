@@ -10,7 +10,15 @@ const { connectDb } = require('./config/db.js');
 
 let app=express();
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://your-vercel-app.vercel.app", // replace after deploying frontend
+    ],
+    credentials: true,
+  })
+);
 
 const PORT=process.env.PORT || 5000;
 app.use("/api/auth", authRoutes);
