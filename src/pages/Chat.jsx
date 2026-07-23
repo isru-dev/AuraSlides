@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react";
 
 export function Chat() {
   const [history, setHistory] = useState([]);
@@ -10,6 +12,22 @@ export function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    setShowSettings(false);
+
+    localStorage.removeItem("userToken");
+
+    setUser(null);
+    setHistory([]);
+    setSelectedPresentation(null);
+
+    navigate("/login");
+  };
   const handleChatSubmit = async (e) => {
     e.preventDefault();
 
@@ -409,7 +427,7 @@ export function Chat() {
         </div>
 
         {/* User Profile Bottom */}
-        <div className="border-t border-[rgba(255,255,255,0.06)] pt-4 flex items-center justify-between px-2">
+        <div className="relative border-t border-[rgba(255,255,255,0.06)] pt-4 flex items-center justify-between px-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#06B6D4] to-[#8B5CF6] flex items-center justify-center text-xs font-bold text-white">
               {user?.name
@@ -433,9 +451,26 @@ export function Chat() {
             </div>
           </div>
 
-          <button className="text-xs text-[#94A3B8] hover:text-[#F8FAFC] p-1">
+          {/* Settings Button */}
+          <button
+            onClick={() => setShowSettings((prev) => !prev)}
+            className="text-xs text-[#94A3B8] hover:text-[#F8FAFC] p-1 cursor-pointer"
+          >
             ⚙️
           </button>
+
+          {/* Dropdown */}
+          {showSettings && (
+            <div className="absolute right-2 bottom-12 w-40 bg-[#111827] border border-[rgba(255,255,255,0.06)] rounded-xl shadow-xl overflow-hidden">
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-[#1F2937] transition-colors cursor-pointer"
+              >
+                <LogOut size={18} />
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </aside>
       {sidebarOpen && <div className="fixed inset-0 bg-black/70 z-40"></div>}
@@ -708,5 +743,3 @@ export function Chat() {
     </div>
   );
 }
-
-  
