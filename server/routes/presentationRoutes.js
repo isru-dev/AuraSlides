@@ -141,11 +141,21 @@ router.delete("/:id", protect, async (req, res) => {
   }
 });
 
+
+
 router.post("/:id/chat", protect, async (req, res) => {
   try {
     const { message } = req.body;
     const presentationId = req.params.id;
 
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        message: "Message is required.",
+      });
+    }
+   console.log("Presentation ID:", presentationId);
+console.log("User ID:", req.user.userId);
     const presentation = await Presentation.findOne({
       _id: presentationId,
       owner: req.user.id,
@@ -154,90 +164,111 @@ router.post("/:id/chat", protect, async (req, res) => {
     if (!presentation) {
       return res.status(404).json({
         success: false,
-        message: "Presentation not found",
+        message: "Presentation not found.",
       });
     }
 
-    console.log("User message:", message);
+    // Save user's message immediately
+    presentation.messages.push({
+      role: "user",
+      content: message,
+    });
 
     const aiPrompt = `
-You are a presentation designer.
+You are an expert presentation assistant.
 
-Current slides:
+Current presentation:
+
+Title:
+${presentation.title}
+
+Current Slides:
 ${JSON.stringify(presentation.slides, null, 2)}
 
-User request: "${message}"
+Conversation History:
+${presentation.messages
+  .map((msg) => `${msg.role}: ${msg.content}`)
+  .join("\n")}
 
-Update the slides based on the request. Return ONLY valid JSON with updated slides.
+User Request:
+${message}
+
+Update the presentation according to the user's request.
+
+Return ONLY valid JSON.
+
 Format:
+
 {
+  "reply": "A friendly response to the user explaining what you changed.",
   "slides": [
     {
       "slideNumber": 1,
       "title": "...",
-      "content": ["...", "..."]
+      "content": [
+        "...",
+        "..."
+      ],
+      "layoutType": "bullet-list"
     }
   ]
 }
 `;
 
-    console.log("Sending to Gemini...");
+    console.log("Sending request to Gemini...");
 
     const result = await ai.generateContent(aiPrompt);
-
     const aiText = result.response.text();
 
+    console.log("Raw Gemini response:");
     console.log(aiText);
-    console.log("Gemini response:", aiText);
-      
+
     let parsedResponse;
 
-try {
-  const cleanText = aiText
-    .replace(/```json\s*/g, "")
-    .replace(/```\s*/g, "")
-    .trim();
+    try {
+      const cleanText = aiText
+        .replace(/```json\s*/g, "")
+        .replace(/```\s*/g, "")
+        .trim();
 
-  parsedResponse = JSON.parse(cleanText);
-} catch (err) {
-  console.error("Raw AI response:");
-  console.error(aiText);
+      parsedResponse = JSON.parse(cleanText);
+    } catch (err) {
+      console.error("JSON Parse Error:", err);
 
-  console.error("JSON parse error:");
-  console.error(err);
+      return res.status(500).json({
+        success: false,
+        message: "Gemini returned invalid JSON.",
+        raw: aiText,
+      });
+    }
 
-  return res.status(500).json({
-    success: false,
-    message: "Gemini returned invalid JSON",
-    raw: aiText,
-  });
-}
-
+    // Update slides
     presentation.slides = parsedResponse.slides;
 
-    presentation.messages.push({
-      role: "user",
-      content: message,
-      timestamp: new Date(),
-    });
+    // Save assistant reply
     presentation.messages.push({
       role: "assistant",
-      content: aiText,
-      timestamp: new Date(),
+      content:
+        parsedResponse.reply ||
+        "I've updated your presentation successfully.",
     });
+
+    presentation.status = "completed";
 
     await presentation.save();
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       presentation,
     });
   } catch (err) {
-    console.error("Chat error:", err);
+    console.error(err);
+
     return res.status(500).json({
       success: false,
       message: err.message,
     });
   }
 });
-module.exports = router;
+
+module.exports=router;

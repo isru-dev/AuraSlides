@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const ai = require("../config/gemini");
 
+
 router.post("/generate", async (req, res) => {
   try {
     const { prompt } = req.body;

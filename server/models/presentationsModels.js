@@ -16,7 +16,8 @@ const presentationsSchema = new mongoose.Schema(
     },
 
     slides: [
-      {
+      {     
+        _id: false,  // ← ADD THIS LINE
         slideNumber: {
           type: Number,
           required: true,
