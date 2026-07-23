@@ -708,27 +708,5 @@ export function Chat() {
     </div>
   );
 }
-{
-  /*  <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-widest px-2 mb-1">
-              Recent Decks
-            </span>
-            <div className="flex flex-col gap-1 overflow-y-auto max-h-[50vh] pr-1 custom-scrollbar">
-              {history.map((item) => (
-                <button
-                  key={item._id}
-                  onClick={() => {
-                    handlePresentationClick(item._id);
-                    closeMenu();
-                  }}
-                  className="w-full text-left py-2.5 px-3 rounded-xl text-xs text-[#CBD5E1] hover:bg-[#111827]/60 hover:text-[#F8FAFC] transition-all cursor-pointer truncate flex items-center gap-2.5 group"
-                >
-                  <span className="text-[#F8FAFC] group-hover:text-[#A78BFA] transition-colors">
-                    💬
-                  </span>
-                  <span className="truncate">{item.title}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>*/
-}
+
+  
