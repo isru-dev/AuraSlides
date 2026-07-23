@@ -12,10 +12,8 @@ router.post("/generate", async (req, res) => {
         message: "Prompt is required.",
       });
     }
-;
-    
 
-  const aiPrompt = `
+    const aiPrompt = `
 You are an expert presentation designer.
 
 Create a presentation about:
@@ -25,7 +23,19 @@ Create a presentation about:
 Rules:
 
 - Generate exactly 5 slides.
-- Return ONLY valid JSON.
+Return ONLY raw JSON.
+
+Do NOT include:
+
+- markdown
+- explanation
+- comments
+- code fences
+- introductory text
+- trailing text
+
+The response must begin with {
+and end with }.
 - Do not use markdown.
 - Do not wrap the JSON inside \`\`\`.
 - Each slide must have:
@@ -51,17 +61,20 @@ Return this exact format:
 }
 `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: aiPrompt,
-    });
+    console.log("Sending to Gemini...");
+         
+    const result = await ai.generateContent(aiPrompt);
+
+    const text = result.response.text();
+
+    console.log(text);
 
     return res.json({
       success: true,
-      result: response.text,
+      result: text,
     });
-
   } catch (err) {
+    console.error("Generate error:", err);
     return res.status(500).json({
       success: false,
       message: err.message,

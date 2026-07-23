@@ -6,6 +6,59 @@ export function Chat() {
   const [selectedPresentation, setSelectedPresentation] = useState(null);
   const [user, setUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true); // ← Add loading state
+const [chatInput, setChatInput] = useState("");
+const [isLoading, setIsLoading] = useState(false);
+
+
+const handleChatSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!chatInput.trim() || !selectedPresentation) return;
+  
+  const token = localStorage.getItem("userToken");
+  setIsLoading(true);
+
+  try {
+    // Add user message to chat immediately
+    setSelectedPresentation((prev) => ({
+      ...prev,
+      messages: [
+        ...prev.messages,
+        { role: "user", content: chatInput, timestamp: new Date() },
+      ],
+    }));
+
+    // Clear input
+    setChatInput("");
+
+    // Send to backend
+    const response = await fetch(
+      `http://localhost:5000/api/presentation/${selectedPresentation._id}/chat`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ message: chatInput }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Update with AI response + new slides
+      setSelectedPresentation(data.presentation);
+    } else {
+      alert("Error: " + data.message);
+    }
+  } catch (err) {
+    console.error("Chat error:", err);
+    alert("Failed to send message");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handlePromptSubmit = async (e) => {
     e.preventDefault();
@@ -301,49 +354,115 @@ export function Chat() {
         </header>
 
         <div className="hidden md:block h-16" />
-        {selectedPresentation && (
-          <div className="w-full max-w-4xl z-10">
-            <div className="bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl p-8">
-              {/* Presentation Title */}
-              <h1 className="text-3xl font-bold text-[#F8FAFC] mb-2">
-                {selectedPresentation.title}
-              </h1>
+       {selectedPresentation && (
+  <div className="w-full max-w-6xl z-10 flex gap-6 h-[70vh]">
+    {/* LEFT SIDE: SLIDES */}
+    <div className="flex-1 overflow-y-auto">
+      <div className="bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl p-8">
+        {/* Presentation Title */}
+        <h1 className="text-3xl font-bold text-[#F8FAFC] mb-2">
+          {selectedPresentation.title}
+        </h1>
+        <p className="text-[#94A3B8] text-sm mb-8">
+          {selectedPresentation.prompt}
+        </p>
 
-              {/* Display Slides */}
-              <div className="space-y-6">
-                {selectedPresentation.slides &&
-                selectedPresentation.slides.length > 0 ? (
-                  selectedPresentation.slides.map((slide, index) => (
-                    <div
-                      key={index}
-                      className="bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] rounded-xl p-6 hover:border-[#06B6D4]/30 transition-all"
+        {/* Display Slides */}
+        <div className="space-y-6">
+          {selectedPresentation.slides && selectedPresentation.slides.length > 0 ? (
+            selectedPresentation.slides.map((slide, index) => (
+              <div
+                key={index}
+                className="bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] rounded-xl p-6 hover:border-[#06B6D4]/30 transition-all"
+              >
+                <h2 className="text-xl font-bold text-[#67E8F9] mb-4">
+                  Slide {slide.slideNumber}: {slide.title}
+                </h2>
+                <ul className="space-y-2">
+                  {slide.content && slide.content.map((point, idx) => (
+                    <li
+                      key={idx}
+                      className="text-[#CBD5E1] flex items-start gap-3"
                     >
-                      {/* Slide Title */}
-                      <h2 className="text-xl font-bold text-[#67E8F9] mb-4">
-                        Slide {slide.slideNumber}: {slide.title}
-                      </h2>
-                      {/* Slide Content */}
-                      <ul className="space-y-2">
-                        {slide.content &&
-                          slide.content.map((point, idx) => (
-                            <li
-                              key={idx}
-                              className="text-[#CBD5E1] flex items-start gap-3"
-                            >
-                              <span className="text-[#06B6D4] mt-1">•</span>
-                              <span>{point}</span>
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-[#94A3B8]">No slides generated yet</p>
-                )}
+                      <span className="text-[#06B6D4] mt-1">•</span>
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
+            ))
+          ) : (
+            <p className="text-[#94A3B8]">No slides generated yet</p>
+          )}
+        </div>
+      </div>
+    </div>
+
+    {/* RIGHT SIDE: CHAT */}
+    <div className="w-80 flex flex-col border-l border-[rgba(255,255,255,0.06)]">
+      {/* Chat Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {selectedPresentation.messages && selectedPresentation.messages.length > 0 ? (
+          selectedPresentation.messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-xs rounded-lg p-3 ${
+                  msg.role === "user"
+                    ? "bg-[#06B6D4]/20 border border-[#06B6D4]/30 text-[#F8FAFC]"
+                    : "bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] text-[#CBD5E1]"
+                }`}
+              >
+                <p className="text-xs font-semibold mb-1">
+                  {msg.role === "user" ? "You" : "AI"}
+                </p>
+                <p className="text-sm">{msg.content}</p>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="text-[#94A3B8] text-xs text-center mt-4">
+            No chat history yet
+          </p>
+        )}
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] rounded-lg p-3">
+              <p className="text-[#94A3B8] text-xs">AI is thinking...</p>
             </div>
           </div>
         )}
+      </div>
+
+      {/* Chat Input */}
+      <div className="border-t border-[rgba(255,255,255,0.06)] p-4">
+        <form onSubmit={handleChatSubmit} className="flex flex-col gap-2">
+          <textarea
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            placeholder="Ask to edit slides..."
+            rows={3}
+            className="bg-[#111827]/80 border border-[rgba(255,255,255,0.06)] text-[#F8FAFC] placeholder-[#94A3B8]/40 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-[#06B6D4]/60 resize-none"
+            disabled={isLoading}
+          />
+          <button
+            type="submit"
+            disabled={!chatInput.trim() || isLoading}
+            className={`py-2 px-4 rounded-lg font-medium text-xs transition-all ${
+              chatInput.trim() && !isLoading
+                ? "bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white hover:opacity-90"
+                : "bg-white/[0.04] text-[#94A3B8]/40 cursor-not-allowed"
+            }`}
+          >
+            {isLoading ? "Sending..." : "Send"}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+)}
 
         {/* Hide this when slides are displayed */}
         {!selectedPresentation && (
