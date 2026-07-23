@@ -14,7 +14,7 @@ export function Chat() {
   const [editingTitle, setEditingTitle] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  
+
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -82,6 +82,7 @@ export function Chat() {
     e.preventDefault();
 
     const token = localStorage.getItem("userToken");
+    setIsGenerating(true);
 
     try {
       // Step 1: Call AI to generate slides
@@ -146,6 +147,8 @@ export function Chat() {
     } catch (err) {
       console.error("Error:", err);
       alert("An error occurred: " + err.message);
+    } finally {
+      setIsGenerating(false);
     }
   };
   const handlePresentationClick = async (id) => {
@@ -691,7 +694,15 @@ export function Chat() {
             </p>
           </div>
         )}
+        {isGenerating && (
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="w-5 h-5 border-2 border-[#06B6D4] border-t-transparent rounded-full animate-spin"></div>
 
+            <span className="text-sm text-[#94A3B8]">
+              AuraSlides is generating your presentation...
+            </span>
+          </div>
+        )}
         {!selectedPresentation && (
           <div className="w-full max-w-2xl pb-8 sm:pb-12 z-10 mt-[40px]">
             <form
@@ -702,6 +713,7 @@ export function Chat() {
                 value={promptInput}
                 onChange={(e) => setPromptInput(e.target.value)}
                 rows={3}
+                disabled={isGenerating}
                 placeholder="Structure a 5-slide presentation on Computer Architecture layers and processing targets..."
                 className="w-full bg-transparent border-none text-sm text-[#F8FAFC] placeholder-[#94A3B8]/30 px-3 pt-2 resize-none focus:outline-none leading-relaxed"
                 onKeyDown={(e) => {
@@ -728,7 +740,7 @@ export function Chat() {
                   }`}
                   disabled={!promptInput.trim()}
                 >
-                  Generate Slides ➔
+                  {isGenerating ? "Generating..." : "Generate Slides ➔"}
                 </button>
               </div>
             </form>
