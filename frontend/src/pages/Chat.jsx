@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import { LogOut, MoreVertical, Pencil, Trash2 } from "lucide-react";
 
 export function Chat() {
   const [history, setHistory] = useState([]);
@@ -14,30 +14,35 @@ export function Chat() {
   const [editingTitle, setEditingTitle] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigate = useNavigate();
 
+  function handlemenu() {
+    setSidebarOpen(true);
+  }
+  function closeMenu() {
+    setSidebarOpen(false);
+  }
+
   const handleLogout = () => {
     setShowSettings(false);
-
     localStorage.removeItem("userToken");
-
     setUser(null);
     setHistory([]);
     setSelectedPresentation(null);
-
     navigate("/login");
   };
+
   const handleChatSubmit = async (e) => {
     e.preventDefault();
-
     if (!chatInput.trim() || !selectedPresentation) return;
 
     const token = localStorage.getItem("userToken");
     setIsLoading(true);
 
     try {
-      // Add user message to chat immediately
       setSelectedPresentation((prev) => ({
         ...prev,
         messages: [
@@ -46,10 +51,8 @@ export function Chat() {
         ],
       }));
 
-      // Clear input
       setChatInput("");
 
-      // Send to backend
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}/chat`,
         {
@@ -59,13 +62,12 @@ export function Chat() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ message: chatInput }),
-        },
+        }
       );
 
       const data = await response.json();
 
       if (data.success) {
-        // Update with AI response + new slides
         setSelectedPresentation(data.presentation);
       } else {
         alert("Error: " + data.message);
@@ -85,7 +87,6 @@ export function Chat() {
     setIsGenerating(true);
 
     try {
-      // Step 1: Call AI to generate slides
       console.log("Generating slides from prompt...");
       const aiResponse = await fetch(
         `${import.meta.env.VITE_API_URL}/api/ai/generate`,
@@ -93,7 +94,7 @@ export function Chat() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt: promptInput }),
-        },
+        }
       );
 
       const aiData = await aiResponse.json();
@@ -103,12 +104,11 @@ export function Chat() {
         return;
       }
 
-      // Step 2: Get generated slides
       const generatedSlides = aiData.result.slides || [];
       const generatedTitle = aiData.result.title || promptInput;
 
       console.log("Generated slides:", generatedSlides);
-      // Step 3: Create presentation with generated slides
+
       const presentationResponse = await fetch(
         `${import.meta.env.VITE_API_URL}/api/presentation`,
         {
@@ -123,19 +123,14 @@ export function Chat() {
             slides: generatedSlides,
             themeColor: "#06B6D4",
           }),
-        },
+        }
       );
 
       const presentationData = await presentationResponse.json();
 
       if (presentationData.success) {
-        // Add the new presentation to the top of the sidebar
         setHistory((prev) => [presentationData.presentation, ...prev]);
-
-        // Auto-select the new presentation to display it
         setSelectedPresentation(presentationData.presentation);
-
-        // Clear the textarea
         setPromptInput("");
       } else {
         alert(presentationData.message);
@@ -147,6 +142,7 @@ export function Chat() {
       setIsGenerating(false);
     }
   };
+
   const handlePresentationClick = async (id) => {
     const token = localStorage.getItem("userToken");
 
@@ -156,7 +152,7 @@ export function Chat() {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      },
+      }
     );
 
     const data = await response.json();
@@ -165,69 +161,12 @@ export function Chat() {
       setSelectedPresentation(data.presentation);
     }
   };
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  function handlemenu() {
-    setSidebarOpen(true);
-  }
-  function closeMenu() {
-    setSidebarOpen(false);
-  }
-  useEffect(() => {
-    const token = localStorage.getItem("userToken");
-
-    fetch(`${import.meta.env.VITE_API_URL}/api/presentation`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setHistory(data.presentations);
-        } else {
-          console.log(data.message);
-        }
-      })
-      .catch((err) => console.log(err));
-  }, []);
-  useEffect(() => {
-    const token = localStorage.getItem("userToken");
-
-    // Check if token exists
-    if (!token) {
-      setUserLoading(false);
-      return; // Don't fetch if no token
-    }
-
-    fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          console.log("User data received:", data); // ← Add this line
-
-          setUser(data.user); // ← Only set if successful
-        } else {
-          console.error("Failed to fetch user:", data.message);
-          // Optionally redirect to login if unauthorized
-        }
-      })
-      .catch((err) => {
-        console.error("User fetch error:", err);
-      })
-      .finally(() => {
-        setUserLoading(false); // ← Stop loading regardless
-      });
-  }, []);
 
   const handleNewPresentation = () => {
     setSelectedPresentation(null);
     setPromptInput("");
   };
-  // Delete presentation
+
   const handleDeletePresentation = async (presentationId) => {
     if (!window.confirm("Delete this presentation?")) return;
 
@@ -241,16 +180,14 @@ export function Chat() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        },
+        }
       );
 
       const data = await response.json();
 
       if (data.success) {
-        // Remove from sidebar
         setHistory((prev) => prev.filter((p) => p._id !== presentationId));
 
-        // If deleted presentation was selected, deselect it
         if (selectedPresentation?._id === presentationId) {
           setSelectedPresentation(null);
         }
@@ -263,7 +200,6 @@ export function Chat() {
     }
   };
 
-  // Rename presentation
   const handleRenamePresentation = async (presentationId) => {
     if (!editingTitle.trim()) {
       alert("Title cannot be empty");
@@ -287,20 +223,18 @@ export function Chat() {
             slides: selectedPresentation.slides,
             themeColor: selectedPresentation.themeColor,
           }),
-        },
+        }
       );
 
       const data = await response.json();
 
       if (data.success) {
-        // Update in sidebar
         setHistory((prev) =>
           prev.map((p) =>
-            p._id === presentationId ? { ...p, title: editingTitle } : p,
-          ),
+            p._id === presentationId ? { ...p, title: editingTitle } : p
+          )
         );
 
-        // Update selected presentation
         if (selectedPresentation?._id === presentationId) {
           setSelectedPresentation({
             ...selectedPresentation,
@@ -318,22 +252,194 @@ export function Chat() {
       alert("Failed to rename presentation");
     }
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem("userToken");
+
+    fetch(`${import.meta.env.VITE_API_URL}/api/presentation`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setHistory(data.presentations);
+        } else {
+          console.log(data.message);
+        }
+      })
+      .catch((err) => console.log(err));
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("userToken");
+
+    if (!token) {
+      setUserLoading(false);
+      return;
+    }
+
+    fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setUser(data.user);
+        } else {
+          console.error("Failed to fetch user:", data.message);
+        }
+      })
+      .catch((err) => {
+        console.error("User fetch error:", err);
+      })
+      .finally(() => {
+        setUserLoading(false);
+      });
+  }, []);
+
+  // Reusable component for rendering a single presentation item in the sidebar
+const PresentationItem = ({ presentation, onSelect, isMobile }) => (
+  <div
+    className={`group relative p-3 rounded-lg cursor-pointer transition-all ${
+      selectedPresentation?._id === presentation._id
+        ? "bg-[#06B6D4]/10 border border-[#06B6D4]/30"
+        : "hover:bg-[#111827]/60 border border-transparent"
+    }`}
+  >
+    {editingId === presentation._id ? (
+      // EDIT MODE
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={editingTitle}
+          onChange={(e) => setEditingTitle(e.target.value)}
+          autoFocus
+          className="flex-1 bg-[#111827]/80 border border-[#06B6D4]/30 text-[#F8FAFC] rounded px-2 py-1 text-xs focus:outline-none"
+        />
+        <button
+          onClick={() => handleRenamePresentation(presentation._id)}
+          className="bg-[#06B6D4]/20 text-[#06B6D4] rounded px-2 py-1 text-xs cursor-pointer"
+        >
+          ✓
+        </button>
+        <button
+          onClick={() => {
+            setEditingId(null);
+            setEditingTitle("");
+          }}
+          className="bg-red-500/20 text-red-400 rounded px-2 py-1 text-xs cursor-pointer"
+        >
+          ✕
+        </button>
+      </div>
+    ) : (
+      <>
+        <div
+          onClick={() => {
+            onSelect(presentation);
+            if (isMobile) closeMenu();
+          }}
+          className="flex items-start justify-between pr-8"
+        >
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-[#F8FAFC] truncate">
+              {presentation.title}
+            </p>
+            <p className="text-[10px] text-[#94A3B8] truncate mt-1">
+              {presentation.prompt}
+            </p>
+          </div>
+        </div>
+
+        {isMobile ? (
+          // ============ MOBILE: THREE-DOT + DROPDOWN ============
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenMenuId(
+                  openMenuId === presentation._id ? null : presentation._id
+                );
+              }}
+              className="absolute right-2 top-2 p-1 rounded-lg hover:bg-[#1E293B] text-[#94A3B8]"
+            >
+              <MoreVertical size={16} />
+            </button>
+
+            {openMenuId === presentation._id && (
+              <div className="absolute right-2 top-9 w-32 bg-[#111827] rounded-xl border border-white/10 shadow-xl z-50">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingId(presentation._id);
+                    setEditingTitle(presentation.title);
+                    setOpenMenuId(null);
+                  }}
+                  className="flex items-center gap-2 w-full text-left px-3 py-2 hover:bg-[#1E293B] text-xs text-[#F8FAFC]"
+                >
+                  <Pencil size={12} /> Rename
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeletePresentation(presentation._id);
+                    setOpenMenuId(null);
+                  }}
+                  className="flex items-center gap-2 w-full text-left px-3 py-2 hover:bg-[#1E293B] text-xs text-red-400"
+                >
+                  <Trash2 size={12} /> Delete
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          // ============ DESKTOP: HOVER ICONS ============
+          <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditingId(presentation._id);
+                setEditingTitle(presentation.title);
+              }}
+              className="bg-[#111827]/80 border border-white/10 text-[#94A3B8] hover:text-[#67E8F9] rounded px-2 py-1 text-xs"
+            >
+              <Pencil size={12} />
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeletePresentation(presentation._id);
+              }}
+              className="bg-[#111827]/80 border border-white/10 text-[#94A3B8] hover:text-red-400 rounded px-2 py-1 text-xs"
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
+        )}
+      </>
+    )}
+  </div>
+);
+
   return (
     <div className="min-h-screen bg-[#050816] text-[#F8FAFC] flex font-sans select-none overflow-hidden">
+      {/* ============ DESKTOP SIDEBAR ============ */}
       <aside className="w-64 border-r border-[rgba(255,255,255,0.06)] bg-[#0B1220]/30 backdrop-blur-xl hidden md:flex flex-col p-4 justify-between">
         <div className="flex flex-col gap-6">
-          {/* Logo */}
           <div className="flex items-center gap-2 px-2">
             <span className="bg-gradient-to-r from-[#67E8F9] via-[#A78BFA] to-[#C084FC] bg-clip-text text-transparent font-bold tracking-tight text-lg">
               AuraSlides
             </span>
-
             <span className="text-[10px] bg-[#67E8F9]/10 text-[#67E8F9] font-medium px-1.5 py-0.5 rounded-md uppercase tracking-wider">
               v1.0
             </span>
           </div>
 
-          {/* New Presentation Button */}
           <button
             onClick={handleNewPresentation}
             className="w-full bg-[#111827]/40 text-[#F8FAFC] border border-[rgba(255,255,255,0.06)] rounded-xl py-2.5 px-4 text-xs font-semibold hover:bg-[#111827]/80 hover:border-[#67E8F9]/30 transition-all cursor-pointer flex items-center justify-center gap-2"
@@ -342,90 +448,18 @@ export function Chat() {
             New Presentation
           </button>
 
-          {/* Recent Decks */}
           <div className="space-y-2">
             {history.map((presentation) => (
-              <div
+              <PresentationItem
                 key={presentation._id}
-                className={`group relative p-3 rounded-lg cursor-pointer transition-all ${
-                  selectedPresentation?._id === presentation._id
-                    ? "bg-[#06B6D4]/10 border border-[#06B6D4]/30"
-                    : "hover:bg-[#111827]/60 border border-transparent"
-                }`}
-              >
-                {/* Edit Mode */}
-                {editingId === presentation._id ? (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={editingTitle}
-                      onChange={(e) => setEditingTitle(e.target.value)}
-                      autoFocus
-                      className="flex-1 bg-[#111827]/80 border border-[#06B6D4]/30 text-[#F8FAFC] rounded px-2 py-1 text-xs focus:outline-none"
-                    />
-
-                    <button
-                      onClick={() => handleRenamePresentation(presentation._id)}
-                      className="bg-[#06B6D4]/20 text-[#06B6D4] rounded px-2 py-1 text-xs cursor-pointer"
-                    >
-                      ✓
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setEditingId(null);
-                        setEditingTitle("");
-                      }}
-                      className="bg-red-500/20 text-red-400 rounded px-2 py-1 text-xs cursor-pointer"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    {/* Presentation Info */}
-                    <div
-                      onClick={() => setSelectedPresentation(presentation)}
-                      className="flex items-start justify-between"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-[#F8FAFC] truncate">
-                          {presentation.title}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingId(presentation._id);
-                          setEditingTitle(presentation.title);
-                        }}
-                        className="bg-[#111827]/80 border border-white/10 text-[#94A3B8] hover:text-[#67E8F9] rounded px-2 py-1 text-xs"
-                      >
-                        ✎
-                      </button>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeletePresentation(presentation._id);
-                        }}
-                        className="bg-[#111827]/80 border border-white/10 text-[#94A3B8] hover:text-red-400 rounded px-2 py-1 text-xs"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
+                presentation={presentation}
+                onSelect={setSelectedPresentation}
+                isMobile={false}
+              />
             ))}
           </div>
         </div>
 
-        {/* User Profile Bottom */}
         <div className="relative border-t border-[rgba(255,255,255,0.06)] pt-4 flex items-center justify-between px-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#06B6D4] to-[#8B5CF6] flex items-center justify-center text-xs font-bold text-white">
@@ -438,19 +472,16 @@ export function Chat() {
                     .slice(0, 2)
                 : "U"}
             </div>
-
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-medium text-[#F8FAFC] truncate">
                 {userLoading ? "Loading..." : user?.name || "Guest"}
               </span>
-
               <span className="text-[10px] text-[#94A3B8] truncate">
                 {user?.email || ""}
               </span>
             </div>
           </div>
 
-          {/* Settings Button */}
           <button
             onClick={() => setShowSettings((prev) => !prev)}
             className="text-xs text-[#94A3B8] hover:text-[#F8FAFC] p-1 cursor-pointer"
@@ -458,47 +489,45 @@ export function Chat() {
             ⚙️
           </button>
 
-          {/* Dropdown */}
           {showSettings && (
             <div className="absolute right-2 bottom-12 w-40 bg-[#111827] border border-[rgba(255,255,255,0.06)] rounded-xl shadow-xl overflow-hidden">
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-[#1F2937] transition-colors cursor-pointer"
+                className="w-full flex items-center gap-2 text-left px-4 py-3 text-sm text-red-400 hover:bg-[#1F2937] transition-colors cursor-pointer"
               >
-                <LogOut size={18} />
+                <LogOut size={16} />
                 Logout
               </button>
             </div>
           )}
         </div>
       </aside>
+
+      {/* ============ MOBILE SIDEBAR OVERLAY ============ */}
       {sidebarOpen && (
         <div onClick={closeMenu} className="fixed inset-0 bg-black/70 z-40" />
       )}
 
+      {/* ============ MOBILE SIDEBAR ============ */}
       <aside
         className={`
-    fixed top-0 left-0 h-screen w-64
-    bg-[#0B1220]
-    border-r border-[rgba(255,255,255,0.06)]
-    z-50
-    transform transition-transform duration-300
-    md:hidden flex flex-col justify-between
-    ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-  `}
+          fixed top-0 left-0 h-screen w-64
+          bg-[#0B1220]
+          border-r border-[rgba(255,255,255,0.06)]
+          z-50
+          transform transition-transform duration-300
+          md:hidden flex flex-col justify-between
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
       >
-        {/* Top Section */}
         <div>
-          {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/5">
             <span className="font-bold text-lg">AuraSlides</span>
-
             <button onClick={closeMenu} className="text-xl cursor-pointer">
               ✕
             </button>
           </div>
 
-          {/* New Presentation */}
           <div className="p-4">
             <button
               onClick={() => {
@@ -512,35 +541,24 @@ export function Chat() {
             </button>
           </div>
 
-          {/* Recent Decks */}
           <div className="px-4">
             <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-widest">
               Recent Decks
             </span>
 
-            <div className="mt-3 flex flex-col gap-2 overflow-y-auto max-h-[55vh]">
-              {history.map((item) => (
-                <button
-                  key={item._id}
-                  onClick={() => {
-                    handlePresentationClick(item._id);
-                    closeMenu();
-                  }}
-                  className={`text-left rounded-xl px-3 py-3 transition ${
-                    selectedPresentation?._id === item._id
-                      ? "bg-[#06B6D4]/10 border border-[#06B6D4]/30"
-                      : "hover:bg-[#111827]/70"
-                  }`}
-                >
-                  <p className="text-sm text-white truncate">{item.title}</p>
-
-                </button>
+            <div className="space-y-2 mt-2">
+              {history.map((presentation) => (
+                <PresentationItem
+                  key={presentation._id}
+                  presentation={presentation}
+                  onSelect={setSelectedPresentation}
+                  isMobile={true}
+                />
               ))}
             </div>
           </div>
         </div>
 
-        {/* User Profile */}
         <div className="relative border-t border-[rgba(255,255,255,0.06)] p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
@@ -554,12 +572,10 @@ export function Chat() {
                       .slice(0, 2)
                   : "U"}
               </div>
-
               <div className="min-w-0">
                 <p className="text-sm font-medium text-white truncate">
                   {userLoading ? "Loading..." : user?.name || "Guest"}
                 </p>
-
                 <p className="text-xs text-[#94A3B8] truncate">
                   {user?.email || ""}
                 </p>
@@ -574,7 +590,6 @@ export function Chat() {
             </button>
           </div>
 
-          {/* Settings Dropdown */}
           {showSettings && (
             <div className="absolute right-4 bottom-16 w-40 rounded-xl bg-[#111827] border border-[rgba(255,255,255,0.06)] shadow-xl overflow-hidden">
               <button
@@ -588,6 +603,8 @@ export function Chat() {
           )}
         </div>
       </aside>
+
+      {/* ============ MAIN CONTENT ============ */}
       <main className="flex-1 flex flex-col justify-between items-center px-6 relative overflow-hidden">
         <div className="absolute top-[-10%] left-[30%] w-[500px] h-[500px] bg-[#8B5CF6]/5 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-[-10%] right-[20%] w-[400px] h-[400px] bg-[#06B6D4]/5 rounded-full blur-[100px] pointer-events-none" />
@@ -605,42 +622,41 @@ export function Chat() {
         </header>
 
         <div className="hidden md:block h-16" />
+
+        {/* SLIDES + CHAT VIEW */}
         {selectedPresentation && (
-          <div className="w-full max-w-6xl z-10 flex gap-6 h-[100vh]">
-            {/* LEFT SIDE: SLIDES */}
-            <div className="flex-[1.86] overflow-y-auto scrollbar-none mb-1.5">
-              <div className="bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl p-8">
-                {/* Presentation Title */}
-                <h1 className="text-3xl font-bold text-[#F8FAFC] mb-2">
+          <div className="w-full max-w-7xl z-10 flex flex-col lg:flex-row gap-6 h-auto lg:h-screen">
+            {/* LEFT: PRESENTATION */}
+            <div className="w-full lg:flex-[1.8] overflow-y-auto scrollable-none">
+              <div className="bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl p-4 sm:p-6 lg:p-8">
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] mb-2 break-words">
                   {selectedPresentation.title}
                 </h1>
-                <p className="text-[#94A3B8] text-sm mb-8">
+                <p className="text-[#94A3B8] text-xs sm:text-sm mb-6 break-words">
                   {selectedPresentation.prompt}
                 </p>
 
-                {/* Display Slides */}
-                <div className="space-y-6">
+                <div className="space-y-5 scrollable-none">
                   {selectedPresentation.slides &&
                   selectedPresentation.slides.length > 0 ? (
                     selectedPresentation.slides.map((slide, index) => (
                       <div
                         key={index}
-                        className="bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] rounded-xl p-6 hover:border-[#06B6D4]/30 transition-all"
+                        className="bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] rounded-xl p-4 sm:p-6 hover:border-[#06B6D4]/30 transition-all"
                       >
-                        <h2 className="text-xl font-bold text-[#67E8F9] mb-4">
+                        <h2 className="text-lg sm:text-xl font-bold text-[#67E8F9] mb-4">
                           Slide {slide.slideNumber}: {slide.title}
                         </h2>
                         <ul className="space-y-2">
-                          {slide.content &&
-                            slide.content.map((point, idx) => (
-                              <li
-                                key={idx}
-                                className="text-[#CBD5E1] flex items-start gap-3"
-                              >
-                                <span className="text-[#06B6D4] mt-1">•</span>
-                                <span>{point}</span>
-                              </li>
-                            ))}
+                          {slide.content?.map((point, idx) => (
+                            <li
+                              key={idx}
+                              className="flex gap-3 text-[#CBD5E1] text-sm sm:text-base"
+                            >
+                              <span className="text-[#06B6D4] mt-1">•</span>
+                              <span className="break-words">{point}</span>
+                            </li>
+                          ))}
                         </ul>
                       </div>
                     ))
@@ -651,40 +667,46 @@ export function Chat() {
               </div>
             </div>
 
-            {/* RIGHT SIDE: CHAT */}
-            <div className="flex-1 flex flex-col border-l border-[rgba(255,255,255,0.06)] min-w-0 scrollbar-none">
-              {/* Chat Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* RIGHT: CHAT */}
+            <div className="w-full lg:flex-1 flex flex-col border border-[rgba(255,255,255,0.06)] lg:border-l lg:border-t-0 rounded-2xl overflow-hidden bg-[#0B1220]/60">
+              <div className="p-4 border-b border-[rgba(255,255,255,0.06)]">
+                <h2 className="text-white font-semibold">AI Assistant</h2>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[350px] lg:max-h-none">
                 {selectedPresentation.messages &&
                 selectedPresentation.messages.length > 0 ? (
                   selectedPresentation.messages.map((msg, idx) => (
                     <div
                       key={idx}
-                      className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                      className={`flex ${
+                        msg.role === "user" ? "justify-end" : "justify-start"
+                      }`}
                     >
                       <div
-                        className={`max-w-xs rounded-lg p-3 ${
+                        className={`max-w-[90%] sm:max-w-xs rounded-xl p-3 ${
                           msg.role === "user"
-                            ? "bg-[#06B6D4]/20 border border-[#06B6D4]/30 text-[#F8FAFC]"
+                            ? "bg-[#06B6D4]/20 border border-[#06B6D4]/30 text-white"
                             : "bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] text-[#CBD5E1]"
                         }`}
                       >
                         <p className="text-xs font-semibold mb-1">
                           {msg.role === "user" ? "You" : "AI"}
                         </p>
-                        <p className="text-sm">{msg.content}</p>
+                        <p className="text-sm break-words">{msg.content}</p>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-[#94A3B8] text-xs text-center mt-4">
+                  <p className="text-[#94A3B8] text-center text-sm">
                     No chat history yet
                   </p>
                 )}
+
                 {isLoading && (
                   <div className="flex justify-start">
                     <div className="bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] rounded-lg p-3">
-                      <p className="text-[#94A3B8] text-xs">
+                      <p className="text-[#94A3B8] text-sm animate-pulse">
                         AI is thinking...
                       </p>
                     </div>
@@ -692,27 +714,24 @@ export function Chat() {
                 )}
               </div>
 
-              {/* Chat Input */}
               <div className="border-t border-[rgba(255,255,255,0.06)] p-4">
-                <form
-                  onSubmit={handleChatSubmit}
-                  className="flex flex-col gap-2"
-                >
+                <form onSubmit={handleChatSubmit} className="flex flex-col gap-3">
                   <textarea
+                    rows={3}
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Ask to edit slides..."
-                    rows={3}
-                    className="bg-[#111827]/80 border border-[rgba(255,255,255,0.06)] text-[#F8FAFC] placeholder-[#94A3B8]/40 rounded-lg py-2 px-3 text-xs focus:outline-none focus:border-[#06B6D4]/60 resize-none"
                     disabled={isLoading}
+                    placeholder="Ask AI to improve your slides..."
+                    className="w-full bg-[#111827]/80 border border-[rgba(255,255,255,0.06)] rounded-xl px-4 py-3 text-sm text-white placeholder-[#94A3B8] resize-none focus:outline-none focus:border-[#06B6D4]"
                   />
+
                   <button
                     type="submit"
                     disabled={!chatInput.trim() || isLoading}
-                    className={`py-2 px-4 rounded-lg font-medium text-xs transition-all cursor-pointer ${
+                    className={`w-full py-3 rounded-xl font-medium transition cursor-pointer ${
                       chatInput.trim() && !isLoading
                         ? "bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white hover:opacity-90"
-                        : "bg-white/[0.04] text-[#94A3B8]/40 cursor-not-allowed"
+                        : "bg-gray-700 text-gray-400 cursor-not-allowed"
                     }`}
                   >
                     {isLoading ? "Sending..." : "Send"}
@@ -723,7 +742,7 @@ export function Chat() {
           </div>
         )}
 
-        {/* Hide this when slides are displayed */}
+        {/* WELCOME MESSAGE */}
         {!selectedPresentation && (
           <div className="w-full max-w-2xl flex flex-col items-center text-center gap-4 my-auto z-10">
             <div className="mb-2 px-3 py-1 rounded-full bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] text-[11px] text-[#67E8F9] font-medium tracking-wide shadow-sm animate-pulse">
@@ -737,20 +756,22 @@ export function Chat() {
               </span>
             </h2>
             <p className="text-[#94A3B8] text-sm max-w-md leading-relaxed mt-1">
-              Input a concept, text snippet, or architecture topic, and let Aura
-              generate structured, export-ready slides in seconds.
+              Input a concept, text snippet, or architecture topic, and let
+              Aura generate structured, export-ready slides in seconds.
             </p>
           </div>
         )}
+
         {isGenerating && (
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="w-5 h-5 border-2 border-[#06B6D4] border-t-transparent rounded-full animate-spin"></div>
-
             <span className="text-sm text-[#94A3B8]">
               AuraSlides is generating your presentation...
             </span>
           </div>
         )}
+
+        {/* PROMPT INPUT FORM */}
         {!selectedPresentation && (
           <div className="w-full max-w-2xl pb-8 sm:pb-12 z-10 mt-[40px]">
             <form
