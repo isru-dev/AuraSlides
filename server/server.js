@@ -14,7 +14,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://aura-slides.vercel.app/", 
+      "https://aura-slides.vercel.app", 
     ],
     credentials: true,
   })
