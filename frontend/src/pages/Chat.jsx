@@ -349,9 +349,7 @@ const PresentationItem = ({ presentation, onSelect, isMobile }) => (
             <p className="text-xs font-medium text-[#F8FAFC] truncate">
               {presentation.title}
             </p>
-            <p className="text-[10px] text-[#94A3B8] truncate mt-1">
-              {presentation.prompt}
-            </p>
+           
           </div>
         </div>
 
