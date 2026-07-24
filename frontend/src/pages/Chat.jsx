@@ -472,7 +472,10 @@ export function Chat() {
           )}
         </div>
       </aside>
-      {sidebarOpen && <div className="fixed inset-0 bg-black/70 z-40"></div>}
+      {sidebarOpen && (
+        <div onClick={closeMenu} className="fixed inset-0 bg-black/70 z-40" />
+      )}
+
       <aside
         className={`
     fixed top-0 left-0 h-screen w-64
@@ -480,60 +483,109 @@ export function Chat() {
     border-r border-[rgba(255,255,255,0.06)]
     z-50
     transform transition-transform duration-300
-    md:hidden flex flex-col gap-4 justify-between
+    md:hidden flex flex-col justify-between
     ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
   `}
       >
+        {/* Top Section */}
         <div>
+          {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/5">
-            <span className="font-bold">AuraSlides</span>
+            <span className="font-bold text-lg">AuraSlides</span>
 
             <button onClick={closeMenu} className="text-xl cursor-pointer">
               ✕
             </button>
           </div>
-          <button className="w-full bg-[#111827]/40 text-[#F8FAFC] border border-[rgba(255,255,255,0.06)] rounded-xl py-2.5 px-4 text-xs font-semibold hover:bg-[#111827]/80 hover:border-[#67E8F9]/30 transition-all cursor-pointer flex items-center justify-center gap-2">
-            <span className="text-base text-[#67E8F9]">+</span> New Presentation
-          </button>
-          <div className="flex flex-col gap-2">
-            <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-widest px-2 mb-1">
+
+          {/* New Presentation */}
+          <div className="p-4">
+            <button
+              onClick={() => {
+                handleNewPresentation();
+                closeMenu();
+              }}
+              className="w-full bg-[#111827]/40 text-[#F8FAFC] border border-[rgba(255,255,255,0.06)] rounded-xl py-2.5 px-4 text-xs font-semibold hover:bg-[#111827]/80 hover:border-[#67E8F9]/30 transition-all flex items-center justify-center gap-2"
+            >
+              <span className="text-base text-[#67E8F9]">+</span>
+              New Presentation
+            </button>
+          </div>
+
+          {/* Recent Decks */}
+          <div className="px-4">
+            <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-widest">
               Recent Decks
             </span>
-            <div className="flex flex-col gap-1 overflow-y-auto max-h-[50vh] pr-1 custom-scrollbar">
+
+            <div className="mt-3 flex flex-col gap-2 overflow-y-auto max-h-[55vh]">
               {history.map((item) => (
                 <button
                   key={item._id}
-                  onClick={closeMenu}
-                  className="w-full text-left py-2.5 px-3 rounded-xl text-xs text-[#CBD5E1] hover:bg-[#111827]/60 hover:text-[#F8FAFC] transition-all cursor-pointer truncate flex items-center gap-2.5 group"
+                  onClick={() => {
+                    handlePresentationClick(item._id);
+                    closeMenu();
+                  }}
+                  className={`text-left rounded-xl px-3 py-3 transition ${
+                    selectedPresentation?._id === item._id
+                      ? "bg-[#06B6D4]/10 border border-[#06B6D4]/30"
+                      : "hover:bg-[#111827]/70"
+                  }`}
                 >
-                  <span className="text-[#F8FAFC] group-hover:text-[#A78BFA] transition-colors">
-                    💬
-                  </span>
-                  <span className="truncate">{item.title}</span>
+                  <p className="text-sm text-white truncate">{item.title}</p>
+
                 </button>
               ))}
             </div>
           </div>
         </div>
-        <div className="pb-4">
-          <div className="border-t border-[rgba(255,255,255,0.06)] pt-4 flex items-center justify-between px-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#06B6D4] to-[#8B5CF6] flex items-center justify-center text-xs font-bold text-white shadow-md shadow-[#06B6D4]/10 flex-shrink-0">
-                IG
+
+        {/* User Profile */}
+        <div className="relative border-t border-[rgba(255,255,255,0.06)] p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#06B6D4] to-[#8B5CF6] flex items-center justify-center text-sm font-bold text-white">
+                {user?.name
+                  ? user.name
+                      .split(" ")
+                      .map((w) => w[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)
+                  : "U"}
               </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-medium text-[#F8FAFC] truncate">
-                  Israel Gezahegn
-                </span>
-                <span className="text-[10px] text-[#94A3B8] truncate">
-                  Premium Member
-                </span>
+
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-white truncate">
+                  {userLoading ? "Loading..." : user?.name || "Guest"}
+                </p>
+
+                <p className="text-xs text-[#94A3B8] truncate">
+                  {user?.email || ""}
+                </p>
               </div>
             </div>
-            <button className="text-xs text-[#94A3B8] hover:text-[#F8FAFC] transition-colors p-1 cursor-pointer">
+
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="text-[#94A3B8] hover:text-white"
+            >
               ⚙️
             </button>
           </div>
+
+          {/* Settings Dropdown */}
+          {showSettings && (
+            <div className="absolute right-4 bottom-16 w-40 rounded-xl bg-[#111827] border border-[rgba(255,255,255,0.06)] shadow-xl overflow-hidden">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-4 py-3 text-red-400 hover:bg-[#1F2937] transition-colors"
+              >
+                <LogOut size={18} />
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
         </div>
       </aside>
       <main className="flex-1 flex flex-col justify-between items-center px-6 relative overflow-hidden">
