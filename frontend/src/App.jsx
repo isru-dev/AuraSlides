@@ -5,7 +5,7 @@ import { Register } from "./pages/Register";
 import { Login } from "./pages/Login";
 import { Chat } from "./pages/Chat";
 import { ProtectedRoute } from "./components/ProtectedRoute"; 
-
+import { Profile } from "./pages/Profile";
 
 export default function App() {
   return (
@@ -14,7 +14,13 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-
+        <Route path='/profile'
+            element={
+              <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+           }
+         />
         <Route path="/chat" element={
           <ProtectedRoute>
               <Chat />

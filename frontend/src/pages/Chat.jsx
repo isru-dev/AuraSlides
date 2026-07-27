@@ -19,6 +19,9 @@ export function Chat() {
 
   const navigate = useNavigate();
 
+function handleProfile(){
+  navigate('/profile')
+}
   function handlemenu() {
     setSidebarOpen(true);
   }
@@ -459,7 +462,7 @@ const PresentationItem = ({ presentation, onSelect, isMobile }) => (
         </div>
 
         <div className="relative border-t border-[rgba(255,255,255,0.06)] pt-4 flex items-center justify-between px-2">
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0 cursor-pointer" onClick={handleProfile}>
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#06B6D4] to-[#8B5CF6] flex items-center justify-center text-xs font-bold text-white">
               {user?.name
                 ? user.name
