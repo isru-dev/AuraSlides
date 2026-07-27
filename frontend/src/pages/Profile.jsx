@@ -37,6 +37,7 @@ export function Profile() {
 
   const handleLogout = () => {
     localStorage.removeItem("userToken");
+     setUser(null);
     navigate("/login");
   };
 

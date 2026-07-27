@@ -18,7 +18,9 @@ export function Chat() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigate = useNavigate();
-
+function handleSetting(){
+  setShowSettings(false);
+}
 function handleProfile(){
   navigate('/profile')
 }
@@ -47,11 +49,11 @@ function handleProfile(){
 
     try {
       setSelectedPresentation((prev) => ({
-        ...prev,
+        ...prev,//the curren t object  
         messages: [
           ...prev.messages,
           { role: "user", content: chatInput, timestamp: new Date() },
-        ],
+        ],// in the curent object change only the message part
       }));
 
       setChatInput("");
@@ -508,7 +510,9 @@ const PresentationItem = ({ presentation, onSelect, isMobile }) => (
       {sidebarOpen && (
         <div onClick={closeMenu} className="fixed inset-0 bg-black/70 z-40" />
       )}
-
+      {showSettings && (
+        <div onClick={handleSetting} className="fixed inset-0 bg-black/10 z-40"/>
+      )}
       {/* ============ MOBILE SIDEBAR ============ */}
       <aside
         className={`
@@ -592,6 +596,8 @@ const PresentationItem = ({ presentation, onSelect, isMobile }) => (
           </div>
 
           {showSettings && (
+            <>     
+           <div onclick={handleSetting} className="fixed inset-0 bg-black/10 z-40"/>
             <div className="absolute right-4 bottom-16 w-40 rounded-xl bg-[#111827] border border-[rgba(255,255,255,0.06)] shadow-xl overflow-hidden">
               <button
                 onClick={handleLogout}
@@ -601,8 +607,11 @@ const PresentationItem = ({ presentation, onSelect, isMobile }) => (
                 <span>Logout</span>
               </button>
             </div>
+             </>
           )}
+          
         </div>
+       
       </aside>
 
       {/* ============ MAIN CONTENT ============ */}
