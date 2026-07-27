@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { LogOut, MoreVertical, Pencil, Trash2,Download } from "lucide-react";
 
 export function Chat() {
   const [history, setHistory] = useState([]);
@@ -18,10 +18,32 @@ export function Chat() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigate = useNavigate();
+  const handleExport = async () => {
+    const token = localStorage.getItem("userToken");
 
-function handleProfile(){
-  navigate('/profile')
-}
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}/export`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    const blob = await response.blob();
+
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${selectedPresentation.title}.pptx`;
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+  };
+  function handleProfile() {
+    navigate("/profile");
+  }
   function handlemenu() {
     setSidebarOpen(true);
   }
@@ -65,7 +87,7 @@ function handleProfile(){
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ message: chatInput }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -97,7 +119,7 @@ function handleProfile(){
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt: promptInput }),
-        }
+        },
       );
 
       const aiData = await aiResponse.json();
@@ -126,7 +148,7 @@ function handleProfile(){
             slides: generatedSlides,
             themeColor: "#06B6D4",
           }),
-        }
+        },
       );
 
       const presentationData = await presentationResponse.json();
@@ -155,7 +177,7 @@ function handleProfile(){
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     const data = await response.json();
@@ -183,7 +205,7 @@ function handleProfile(){
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -226,7 +248,7 @@ function handleProfile(){
             slides: selectedPresentation.slides,
             themeColor: selectedPresentation.themeColor,
           }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -234,8 +256,8 @@ function handleProfile(){
       if (data.success) {
         setHistory((prev) =>
           prev.map((p) =>
-            p._id === presentationId ? { ...p, title: editingTitle } : p
-          )
+            p._id === presentationId ? { ...p, title: editingTitle } : p,
+          ),
         );
 
         if (selectedPresentation?._id === presentationId) {
@@ -305,127 +327,126 @@ function handleProfile(){
   }, []);
 
   // Reusable component for rendering a single presentation item in the sidebar
-const PresentationItem = ({ presentation, onSelect, isMobile }) => (
-  <div
-    className={`group relative p-3 rounded-lg cursor-pointer transition-all ${
-      selectedPresentation?._id === presentation._id
-        ? "bg-[#06B6D4]/10 border border-[#06B6D4]/30"
-        : "hover:bg-[#111827]/60 border border-transparent"
-    }`}
-  >
-    {editingId === presentation._id ? (
-      // EDIT MODE
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={editingTitle}
-          onChange={(e) => setEditingTitle(e.target.value)}
-          autoFocus
-          className="flex-1 bg-[#111827]/80 border border-[#06B6D4]/30 text-[#F8FAFC] rounded px-2 py-1 text-xs focus:outline-none"
-        />
-        <button
-          onClick={() => handleRenamePresentation(presentation._id)}
-          className="bg-[#06B6D4]/20 text-[#06B6D4] rounded px-2 py-1 text-xs cursor-pointer"
-        >
-          ✓
-        </button>
-        <button
-          onClick={() => {
-            setEditingId(null);
-            setEditingTitle("");
-          }}
-          className="bg-red-500/20 text-red-400 rounded px-2 py-1 text-xs cursor-pointer"
-        >
-          ✕
-        </button>
-      </div>
-    ) : (
-      <>
-        <div
-          onClick={() => {
-            onSelect(presentation);
-            if (isMobile) closeMenu();
-          }}
-          className="flex items-start justify-between pr-8"
-        >
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-[#F8FAFC] truncate">
-              {presentation.title}
-            </p>
-           
-          </div>
+  const PresentationItem = ({ presentation, onSelect, isMobile }) => (
+    <div
+      className={`group relative p-3 rounded-lg cursor-pointer transition-all ${
+        selectedPresentation?._id === presentation._id
+          ? "bg-[#06B6D4]/10 border border-[#06B6D4]/30"
+          : "hover:bg-[#111827]/60 border border-transparent"
+      }`}
+    >
+      {editingId === presentation._id ? (
+        // EDIT MODE
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={editingTitle}
+            onChange={(e) => setEditingTitle(e.target.value)}
+            autoFocus
+            className="flex-1 bg-[#111827]/80 border border-[#06B6D4]/30 text-[#F8FAFC] rounded px-2 py-1 text-xs focus:outline-none"
+          />
+          <button
+            onClick={() => handleRenamePresentation(presentation._id)}
+            className="bg-[#06B6D4]/20 text-[#06B6D4] rounded px-2 py-1 text-xs cursor-pointer"
+          >
+            ✓
+          </button>
+          <button
+            onClick={() => {
+              setEditingId(null);
+              setEditingTitle("");
+            }}
+            className="bg-red-500/20 text-red-400 rounded px-2 py-1 text-xs cursor-pointer"
+          >
+            ✕
+          </button>
         </div>
-
-        {isMobile ? (
-          // ============ MOBILE: THREE-DOT + DROPDOWN ============
-          <>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpenMenuId(
-                  openMenuId === presentation._id ? null : presentation._id
-                );
-              }}
-              className="absolute right-2 top-2 p-1 rounded-lg hover:bg-[#1E293B] text-[#94A3B8]"
-            >
-              <MoreVertical size={16} />
-            </button>
-
-            {openMenuId === presentation._id && (
-              <div className="absolute right-2 top-9 w-32 bg-[#111827] rounded-xl border border-white/10 shadow-xl z-50">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditingId(presentation._id);
-                    setEditingTitle(presentation.title);
-                    setOpenMenuId(null);
-                  }}
-                  className="flex items-center gap-2 w-full text-left px-3 py-2 hover:bg-[#1E293B] text-xs text-[#F8FAFC]"
-                >
-                  <Pencil size={12} /> Rename
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeletePresentation(presentation._id);
-                    setOpenMenuId(null);
-                  }}
-                  className="flex items-center gap-2 w-full text-left px-3 py-2 hover:bg-[#1E293B] text-xs text-red-400"
-                >
-                  <Trash2 size={12} /> Delete
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          // ============ DESKTOP: HOVER ICONS ============
-          <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditingId(presentation._id);
-                setEditingTitle(presentation.title);
-              }}
-              className="bg-[#111827]/80 border border-white/10 text-[#94A3B8] hover:text-[#67E8F9] rounded px-2 py-1 text-xs"
-            >
-              <Pencil size={12} />
-            </button>
-
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeletePresentation(presentation._id);
-              }}
-              className="bg-[#111827]/80 border border-white/10 text-[#94A3B8] hover:text-red-400 rounded px-2 py-1 text-xs"
-            >
-              <Trash2 size={12} />
-            </button>
+      ) : (
+        <>
+          <div
+            onClick={() => {
+              onSelect(presentation);
+              if (isMobile) closeMenu();
+            }}
+            className="flex items-start justify-between pr-8"
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-[#F8FAFC] truncate">
+                {presentation.title}
+              </p>
+            </div>
           </div>
-        )}
-      </>
-    )}
-  </div>
-);
+
+          {isMobile ? (
+            // ============ MOBILE: THREE-DOT + DROPDOWN ============
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenMenuId(
+                    openMenuId === presentation._id ? null : presentation._id,
+                  );
+                }}
+                className="absolute right-2 top-2 p-1 rounded-lg hover:bg-[#1E293B] text-[#94A3B8]"
+              >
+                <MoreVertical size={16} />
+              </button>
+
+              {openMenuId === presentation._id && (
+                <div className="absolute right-2 top-9 w-32 bg-[#111827] rounded-xl border border-white/10 shadow-xl z-50">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingId(presentation._id);
+                      setEditingTitle(presentation.title);
+                      setOpenMenuId(null);
+                    }}
+                    className="flex items-center gap-2 w-full text-left px-3 py-2 hover:bg-[#1E293B] text-xs text-[#F8FAFC]"
+                  >
+                    <Pencil size={12} /> Rename
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeletePresentation(presentation._id);
+                      setOpenMenuId(null);
+                    }}
+                    className="flex items-center gap-2 w-full text-left px-3 py-2 hover:bg-[#1E293B] text-xs text-red-400"
+                  >
+                    <Trash2 size={12} /> Delete
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            // ============ DESKTOP: HOVER ICONS ============
+            <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingId(presentation._id);
+                  setEditingTitle(presentation.title);
+                }}
+                className="bg-[#111827]/80 border border-white/10 text-[#94A3B8] hover:text-[#67E8F9] rounded px-2 py-1 text-xs"
+              >
+                <Pencil size={12} />
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeletePresentation(presentation._id);
+                }}
+                className="bg-[#111827]/80 border border-white/10 text-[#94A3B8] hover:text-red-400 rounded px-2 py-1 text-xs"
+              >
+                <Trash2 size={12} />
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#050816] text-[#F8FAFC] flex font-sans select-none overflow-hidden">
@@ -462,7 +483,10 @@ const PresentationItem = ({ presentation, onSelect, isMobile }) => (
         </div>
 
         <div className="relative border-t border-[rgba(255,255,255,0.06)] pt-4 flex items-center justify-between px-2">
-          <div className="flex items-center gap-2.5 min-w-0 cursor-pointer" onClick={handleProfile}>
+          <div
+            className="flex items-center gap-2.5 min-w-0 cursor-pointer"
+            onClick={handleProfile}
+          >
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#06B6D4] to-[#8B5CF6] flex items-center justify-center text-xs font-bold text-white">
               {user?.name
                 ? user.name
@@ -561,7 +585,10 @@ const PresentationItem = ({ presentation, onSelect, isMobile }) => (
         </div>
 
         <div className="relative border-t border-[rgba(255,255,255,0.06)] p-4">
-          <div className="flex items-center justify-between cursor-pointer " onClick={handleProfile}>
+          <div
+            className="flex items-center justify-between cursor-pointer "
+            onClick={handleProfile}
+          >
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#06B6D4] to-[#8B5CF6] flex items-center justify-center text-sm font-bold text-white">
                 {user?.name
@@ -628,7 +655,12 @@ const PresentationItem = ({ presentation, onSelect, isMobile }) => (
         {selectedPresentation && (
           <div className="w-full max-w-7xl z-10 flex flex-col lg:flex-row gap-6 h-auto lg:h-screen">
             {/* LEFT: PRESENTATION */}
-            <div className="w-full lg:flex-[1.8] overflow-y-auto scrollable-none">
+            <div className="w-full lg:flex-[1.8] overflow-y-auto scrollable-none justify-end">
+              <div className=" flex items-center gap-2 px-4 py-3 text-red-400  justify-end ">
+              <button onClick={handleExport} className="cursor-pointer">
+               <Download /> Download
+              </button>
+              </div>
               <div className="bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl p-4 sm:p-6 lg:p-8">
                 <h1 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] mb-2 break-words">
                   {selectedPresentation.title}
@@ -716,7 +748,10 @@ const PresentationItem = ({ presentation, onSelect, isMobile }) => (
               </div>
 
               <div className="border-t border-[rgba(255,255,255,0.06)] p-4">
-                <form onSubmit={handleChatSubmit} className="flex flex-col gap-3">
+                <form
+                  onSubmit={handleChatSubmit}
+                  className="flex flex-col gap-3"
+                >
                   <textarea
                     rows={3}
                     value={chatInput}
@@ -757,8 +792,8 @@ const PresentationItem = ({ presentation, onSelect, isMobile }) => (
               </span>
             </h2>
             <p className="text-[#94A3B8] text-sm max-w-md leading-relaxed mt-1">
-              Input a concept, text snippet, or architecture topic, and let
-              Aura generate structured, export-ready slides in seconds.
+              Input a concept, text snippet, or architecture topic, and let Aura
+              generate structured, export-ready slides in seconds.
             </p>
           </div>
         )}
