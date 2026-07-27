@@ -259,4 +259,37 @@ Format:
   }
 });
 
+router.get("/:id/export", protect, async (req, res) => {
+  const presentation = await Presentation.findOne({
+  _id: req.params.id,
+  owner: req.user.id
+});
+
+if (!presentation) {
+  return res.status(404).json({ 
+    success: false,
+    message: "Presentation not found."
+   });
+}
+  const pptx = new PptxGenJS();
+
+  presentation.slides.map((slideData) => {
+  const slide = pptx.addSlide();
+
+  slide.addText(slideData.title, {
+    x: 0.5,
+    y: 0.3,
+    fontSize: 24,
+    bold: true,
+    color: "67E8F9",
+  });
+
+  slide.addText(slideData.content.join("\n"), {
+    x: 0.5,
+    y: 1.2,
+    fontSize: 16,
+    color: "FFFFFF",
+  });
+});
+});
 module.exports = router;
