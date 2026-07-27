@@ -561,7 +561,7 @@ const PresentationItem = ({ presentation, onSelect, isMobile }) => (
         </div>
 
         <div className="relative border-t border-[rgba(255,255,255,0.06)] p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between cursor-pointer " onClick={handleProfile}>
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#06B6D4] to-[#8B5CF6] flex items-center justify-center text-sm font-bold text-white">
                 {user?.name

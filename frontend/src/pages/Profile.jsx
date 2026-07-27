@@ -43,7 +43,6 @@ export function Profile() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#050816] text-[#F8FAFC] px-6">
       <div className="w-full max-w-md bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col items-center p-8 sm:p-10 gap-4">
-        {/* Avatar */}
         <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#06B6D4] to-[#8B5CF6] flex items-center justify-center text-2xl font-bold text-white shadow-md shadow-[#06B6D4]/10">
           {user?.name
             ? user.name
@@ -55,15 +54,12 @@ export function Profile() {
             : "U"}
         </div>
 
-        {/* Name */}
         <h2 className="text-xl font-bold text-[#F8FAFC]">
           {userLoading ? "Loading..." : user?.name || "Guest"}
         </h2>
 
-        {/* Email */}
         <p className="text-sm text-[#94A3B8]">{user?.email || ""}</p>
 
-        {/* Buttons */}
         <div className="w-full flex flex-col gap-3 mt-4">
           <button
             onClick={() => navigate("/chat")}
