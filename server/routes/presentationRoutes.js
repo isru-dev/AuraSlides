@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const ai = require("../services/aiProvider");
-
+const PptxGenJS = require("pptxgenjs");
 const Presentation = require("../models/presentationsModels.js");
 const protect = require("../middleware/authMiddleware.js");
 
@@ -259,4 +259,65 @@ Format:
   }
 });
 
+
+router.get("/:id/export", protect, async (req, res) => {
+  try {
+    const presentation = await Presentation.findOne({
+      _id: req.params.id,
+      owner: req.user.id,
+    });
+
+    if (!presentation) {
+      return res.status(404).json({
+        success: false,
+        message: "Presentation not found.",
+      });
+    }
+
+    const pptx = new PptxGenJS();
+
+    presentation.slides.forEach((slideData) => {
+      const slide = pptx.addSlide();
+      slide.background = { color: "050816" };
+      slide.addText(slideData.title, {
+        x: 0.5,
+        y: 0.3,
+        fontSize: 24,
+        bold: true,
+        color: "67E8F9",
+        paraSpaceAfter: 12
+      });
+
+     slide.addText(
+      slideData.content.map((point) => ({
+       text: point,
+      options: { bullet: true, color: "FFFFFF", fontSize: 16,paraSpaceAfter: 12, },
+        })),
+     {
+    x: 0.5,
+    y: 1.7
+    }
+  )
+  });
+
+    const fileData = await pptx.write("nodebuffer");
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${presentation.title}.pptx"`
+    );
+
+    res.send(fileData);
+  } catch (err) {
+    console.error("Export error:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
 module.exports = router;

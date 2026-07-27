@@ -34,7 +34,29 @@ export function Profile() {
         setUserLoading(false);
       });
   }, []);
+const handleExport = async () => {
+  const token = localStorage.getItem("userToken");
 
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}/export`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const blob = await response.blob();
+
+  const url = window.URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${selectedPresentation.title}.pptx`;
+  link.click();
+
+  window.URL.revokeObjectURL(url);
+};
   const handleLogout = () => {
     localStorage.removeItem("userToken");
      setUser(null);
@@ -75,6 +97,7 @@ export function Profile() {
           >
             Logout
           </button>
+          
         </div>
       </div>
     </div>
