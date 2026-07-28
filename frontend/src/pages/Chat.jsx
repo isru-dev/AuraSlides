@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, MoreVertical, Pencil, Trash2,Download } from "lucide-react";
+import { LogOut, MoreVertical, Pencil, Trash2, Download } from "lucide-react";
 
 export function Chat() {
   const [history, setHistory] = useState([]);
@@ -18,12 +18,12 @@ export function Chat() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigate = useNavigate();
-function handleSetting(){
-  setShowSettings(false);
-}
-function handleProfile(){
-  navigate('/profile')
-}
+  function handleSetting() {
+    setShowSettings(false);
+  }
+  function handleProfile() {
+    navigate("/profile");
+  }
 
   const handleExport = async () => {
     const token = localStorage.getItem("userToken");
@@ -76,11 +76,11 @@ function handleProfile(){
 
     try {
       setSelectedPresentation((prev) => ({
-        ...prev,//the curren t object  
+        ...prev, //the curren t object
         messages: [
           ...prev.messages,
           { role: "user", content: chatInput, timestamp: new Date() },
-        ],// in the curent object change only the message part
+        ], // in the curent object change only the message part
       }));
 
       setChatInput("");
@@ -129,7 +129,7 @@ function handleProfile(){
         },
       );
 
-      const aiData = await aiResponse.json();
+      const aiData = await aiResponse.json(); //chages it to js obj
 
       if (!aiData.success) {
         alert("Failed to generate slides: " + aiData.message);
@@ -336,11 +336,12 @@ function handleProfile(){
   // Reusable component for rendering a single presentation item in the sidebar
   const PresentationItem = ({ presentation, onSelect, isMobile }) => (
     <div
-      className={`group relative p-3 rounded-lg cursor-pointer transition-all ${
-        selectedPresentation?._id === presentation._id
-          ? "bg-[#06B6D4]/10 border border-[#06B6D4]/30"
-          : "hover:bg-[#111827]/60 border border-transparent"
-      }`}
+      className={`group relative p-3 rounded-lg cursor-pointer transition-all 
+        ${
+          selectedPresentation?._id === presentation._id
+            ? "bg-[#06B6D4]/10 border border-[#06B6D4]/30"
+            : "hover:bg-[#111827]/60 border border-transparent"
+        }`}
     >
       {editingId === presentation._id ? (
         // EDIT MODE
@@ -349,6 +350,13 @@ function handleProfile(){
             type="text"
             value={editingTitle}
             onChange={(e) => setEditingTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleRenamePresentation(presentation._id);
+              if (e.key === "Escape") {
+                setEditingId(null);
+                setEditingTitle("");
+              }
+            }}
             autoFocus
             className="flex-1 bg-[#111827]/80 border border-[#06B6D4]/30 text-[#F8FAFC] rounded px-2 py-1 text-xs focus:outline-none"
           />
@@ -465,7 +473,7 @@ function handleProfile(){
               AuraSlides
             </span>
             <span className="text-[10px] bg-[#67E8F9]/10 text-[#67E8F9] font-medium px-1.5 py-0.5 rounded-md uppercase tracking-wider">
-              v1.0
+              v1.5
             </span>
           </div>
 
@@ -540,7 +548,10 @@ function handleProfile(){
         <div onClick={closeMenu} className="fixed inset-0 bg-black/70 z-40" />
       )}
       {showSettings && (
-        <div onClick={handleSetting} className="fixed inset-0 bg-black/10 z-40"/>
+        <div
+          onClick={handleSetting}
+          className="fixed inset-0 bg-black/10 z-40"
+        />
       )}
       {/* ============ MOBILE SIDEBAR ============ */}
       <aside
@@ -628,22 +639,23 @@ function handleProfile(){
           </div>
 
           {showSettings && (
-            <>     
-           <div onclick={handleSetting} className="fixed inset-0 bg-black/10 z-40"/>
-            <div className="absolute right-4 bottom-16 w-40 rounded-xl bg-[#111827] border border-[rgba(255,255,255,0.06)] shadow-xl overflow-hidden">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-4 py-3 text-red-400 hover:bg-[#1F2937] transition-colors"
-              >
-                <LogOut size={18} />
-                <span>Logout</span>
-              </button>
-            </div>
-             </>
+            <>
+              <div
+                onclick={handleSetting}
+                className="fixed inset-0 bg-black/10 z-40"
+              />
+              <div className="absolute right-4 bottom-16 w-40 rounded-xl bg-[#111827] border border-[rgba(255,255,255,0.06)] shadow-xl overflow-hidden">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-red-400 hover:bg-[#1F2937] transition-colors"
+                >
+                  <LogOut size={18} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            </>
           )}
-          
         </div>
-       
       </aside>
 
       {/* ============ MAIN CONTENT ============ */}
@@ -671,9 +683,9 @@ function handleProfile(){
             {/* LEFT: PRESENTATION */}
             <div className="w-full lg:flex-[1.8] overflow-y-auto scrollable-none justify-end">
               <div className=" flex items-center gap-2 px-4 py-3 text-red-400  justify-end ">
-              <button onClick={handleExport} className="cursor-pointer">
-               <Download /> Download
-              </button>
+                <button onClick={handleExport} className="cursor-pointer">
+                  <Download /> Download
+                </button>
               </div>
               <div className="bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl p-4 sm:p-6 lg:p-8">
                 <h1 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] mb-2 break-words">
