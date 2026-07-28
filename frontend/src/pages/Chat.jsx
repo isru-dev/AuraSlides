@@ -463,7 +463,7 @@ export function Chat() {
     </div>
   );
 
-  return (
+ return (
     <div className="min-h-screen bg-[#050816] text-[#F8FAFC] flex font-sans select-none overflow-hidden">
       {/* ============ DESKTOP SIDEBAR ============ */}
       <aside className="w-64 border-r border-[rgba(255,255,255,0.06)] bg-[#0B1220]/30 backdrop-blur-xl hidden md:flex flex-col p-4 justify-between">
@@ -639,21 +639,18 @@ export function Chat() {
           </div>
 
           {showSettings && (
-            <>
-              <div
-                onclick={handleSetting}
-                className="fixed inset-0 bg-black/10 z-40"
-              />
-              <div className="absolute right-4 bottom-16 w-40 rounded-xl bg-[#111827] border border-[rgba(255,255,255,0.06)] shadow-xl overflow-hidden">
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-red-400 hover:bg-[#1F2937] transition-colors"
-                >
-                  <LogOut size={18} />
-                  <span>Logout</span>
-                </button>
-              </div>
-            </>
+            <>     
+            <div onClick={handleSetting} className="fixed inset-0 bg-black/10 z-40"/>
+            <div className="absolute right-4 bottom-16 w-40 rounded-xl bg-[#111827] border border-[rgba(255,255,255,0.06)] shadow-xl overflow-hidden">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-4 py-3 text-red-400 hover:bg-[#1F2937] transition-colors"
+              >
+                <LogOut size={18} />
+                <span>Logout</span>
+              </button>
+            </div>
+             </>
           )}
         </div>
       </aside>
@@ -682,9 +679,9 @@ export function Chat() {
           <div className="w-full max-w-7xl z-10 flex flex-col lg:flex-row gap-6 h-auto lg:h-screen">
             {/* LEFT: PRESENTATION */}
             <div className="w-full lg:flex-[1.8] overflow-y-auto scrollable-none justify-end">
-              <div className=" flex items-center gap-2 px-4 py-3 text-red-400  justify-end ">
-                <button onClick={handleExport} className="cursor-pointer">
-                  <Download /> Download
+              <div className=" flex items-center gap-2 px-4 py-3 text-[#67E8F9] justify-end ">
+                <button onClick={handleExport} className="cursor-pointer flex items-center gap-2 hover:text-white transition-colors">
+                  <Download size={18} /> Download
                 </button>
               </div>
               <div className="bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl p-4 sm:p-6 lg:p-8">
@@ -706,17 +703,37 @@ export function Chat() {
                         <h2 className="text-lg sm:text-xl font-bold text-[#67E8F9] mb-4">
                           Slide {slide.slideNumber}: {slide.title}
                         </h2>
-                        <ul className="space-y-2">
-                          {slide.content?.map((point, idx) => (
-                            <li
-                              key={idx}
-                              className="flex gap-3 text-[#CBD5E1] text-sm sm:text-base"
-                            >
-                              <span className="text-[#06B6D4] mt-1">•</span>
-                              <span className="break-words">{point}</span>
-                            </li>
-                          ))}
-                        </ul>
+
+                        {/* 🖼️ DYNAMIC GRID: Left Bullets, Right Image Preview */}
+                        <div className={`grid grid-cols-1 ${slide.imageUrl ? 'md:grid-cols-2' : 'grid-cols-1'} gap-6 items-center`}>
+                          
+                          {/* Bullet Points Column */}
+                          <ul className="space-y-2">
+                            {slide.content?.map((point, idx) => (
+                              <li
+                                key={idx}
+                                className="flex gap-3 text-[#CBD5E1] text-sm sm:text-base"
+                              >
+                                <span className="text-[#06B6D4] mt-1">•</span>
+                                <span className="break-words">{point}</span>
+                              </li>
+                            ))}
+                          </ul>
+
+                          {/* Image Preview Column (Renders if slide.imageUrl exists) */}
+                          {slide.imageUrl && (
+                            <div className="w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-white/10 bg-[#0B1220] shadow-lg group relative">
+                              <img
+                                src={slide.imageUrl}
+                                alt={slide.imageKeyword || slide.title}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                loading="lazy"
+                              />
+                              
+                            </div>
+                          )}
+
+                        </div>
                       </div>
                     ))
                   ) : (

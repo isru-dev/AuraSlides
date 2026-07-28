@@ -152,8 +152,7 @@ router.post("/:id/chat", protect, async (req, res) => {
         message: "Message is required.",
       });
     }
-    console.log("Presentation ID:", presentationId);
-    console.log("User ID:", req.user.id);
+
     const presentation = await Presentation.findOne({
       _id: presentationId,
       owner: req.user.id,
@@ -166,75 +165,122 @@ router.post("/:id/chat", protect, async (req, res) => {
       });
     }
 
-    // Save user's message immediately
+    // 1. Save user's message
     presentation.messages.push({
       role: "user",
       content: message,
     });
 
+    // 2. Updated Prompt: Ask AI to include imageKeyword
     const aiPrompt = `
 You are an expert presentation assistant.
 
 Current presentation:
-
-Title:
-${presentation.title}
+Title: ${presentation.title}
 
 Current Slides:
 ${JSON.stringify(presentation.slides, null, 2)}
 
 Conversation History:
-${presentation.messages.map((msg) => `${msg.role}: ${msg.content}`).join("\n")}
+${presentation.messages.map((msg) => `${msg.role}:${msg.content}`).join("\n")}
 
 User Request:
 ${message}
 
-Update the presentation according to the user's request.
+Update the presentation according to the user's request. Maintain relevant existing data where appropriate.
+Provide an "imageKeyword" (1-3 English descriptive words for an image search) for each slide.
 
-Return ONLY valid JSON.
+Return ONLY valid JSON with no markdown block markers (no codeblocks).
 
 Format:
-
 {
-  "reply": "A friendly response to the user explaining what you changed.",
+  "reply": "A friendly response explaining what was updated.",
   "slides": [
     {
       "slideNumber": 1,
       "title": "...",
-      "content": [
-        "...",
-        "..."
-      ],
-      "layoutType": "bullet-list"
+      "content": ["...", "..."],
+      "layoutType": "bullet-list",
+      "imageKeyword": "relevant search phrase"
     }
   ]
 }
 `;
-    console.log("Sending request to AI Provider...");
 
     const aiText = await ai.generate(aiPrompt);
 
-    console.log("Raw AI response:");
-    console.log(aiText);
+    // Clean JSON markdown wrappers if AI adds them
+    const cleanJson = aiText.replace(/```json|```/g, "").trim();
 
     let parsedResponse;
-
     try {
-       parsedResponse  = JSON.parse(aiText);
+      parsedResponse = JSON.parse(cleanJson);
     } catch (err) {
       console.error("JSON Parse Error:", err);
-
       return res.status(500).json({
         success: false,
-       message: "AI returned invalid JSON.",
+        message: "AI returned invalid JSON format.",
         raw: aiText,
       });
     }
 
-    // Update slides
-    presentation.slides = parsedResponse.slides;
+    // Map existing slides for easy lookup to prevent refetching unchanged images
+    const existingSlideMap = new Map();
+    presentation.slides.forEach((s) => {
+      existingSlideMap.set(s.slideNumber, s);
+    });
 
-    // Save assistant reply
+    // 3. Process new slides & fetch Unsplash images
+    const updatedSlides = await Promise.all(
+      parsedResponse.slides.map(async (slide) => {
+        const existingSlide = existingSlideMap.get(slide.slideNumber);
+
+        // Reuse image if the imageKeyword hasn't changed
+        if (
+          existingSlide &&
+          existingSlide.imageUrl &&
+          existingSlide.imageKeyword === slide.imageKeyword
+        ) {
+          return {
+            ...slide,
+            imageUrl: existingSlide.imageUrl,
+          };
+        }
+
+        // Fetch new image if imageKeyword changed or slide is new
+        if (slide.imageKeyword) {
+          try {
+            const fetch = (await import("node-fetch")).default;
+            const unsplashRes = await fetch(
+              `https://api.unsplash.com/search/photos?page=1&query=${encodeURIComponent(
+                slide.imageKeyword
+              )}&per_page=1&client_id=${process.env.UNSPLASH_ACCESS_KEY}`
+            );
+
+            if (unsplashRes.ok) {
+              const unsplashData = await unsplashRes.json();
+              if (unsplashData.results && unsplashData.results.length > 0) {
+                return {
+                  ...slide,
+                  imageUrl: unsplashData.results[0].urls.regular,
+                };
+              }
+            }
+          } catch (imgError) {
+            console.error("Failed to fetch image in chat route:", imgError.message);
+          }
+        }
+
+        return {
+          ...slide,
+          imageUrl: slide.imageUrl || null,
+        };
+      })
+    );
+
+    // 4. Update presentation state
+    presentation.slides = updatedSlides;
+
     presentation.messages.push({
       role: "assistant",
       content:
@@ -242,7 +288,6 @@ Format:
     });
 
     presentation.status = "completed";
-
     await presentation.save();
 
     return res.status(200).json({
@@ -251,14 +296,12 @@ Format:
     });
   } catch (err) {
     console.error(err);
-
     return res.status(500).json({
       success: false,
       message: err.message,
     });
   }
 });
-
 
 router.get("/:id/export", protect, async (req, res) => {
   try {
@@ -275,40 +318,86 @@ router.get("/:id/export", protect, async (req, res) => {
     }
 
     const pptx = new PptxGenJS();
-
-    presentation.slides.forEach((slideData) => {
+    // Add this helper function at the top of your export route file
+    async function fetchImageAsBase64(url) {
+      if (!url) return null;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) return null;
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const contentType =
+          response.headers.get("content-type") || "image/jpeg";
+        return `data:${contentType};base64,${buffer.toString("base64")}`;
+      } catch (err) {
+        console.error("Failed to convert image to base64:", err);
+        return null;
+      }
+    }
+    // Change forEach to a for...of loop to support await
+    for (const slideData of presentation.slides) {
       const slide = pptx.addSlide();
       slide.background = { color: "050816" };
+
+      // 1. Add Title
       slide.addText(slideData.title, {
         x: 0.5,
         y: 0.3,
         fontSize: 24,
         bold: true,
         color: "67E8F9",
-        paraSpaceAfter: 12
+        paraSpaceAfter: 12,
       });
 
-     slide.addText(
-      slideData.content.map((point) => ({
-       text: point,
-      options: { bullet: true, color: "FFFFFF", fontSize: 16,paraSpaceAfter: 12, },
+      // 2. Pre-fetch image data if URL exists
+      let base64Image = null;
+      if (slideData.imageUrl) {
+        base64Image = await fetchImageAsBase64(slideData.imageUrl);
+      }
+
+      const hasImage = Boolean(base64Image);
+      const textWidth = hasImage ? 5.0 : 9.0;
+
+      // 3. Add Bullet Points
+      slide.addText(
+        slideData.content.map((point) => ({
+          text: point,
+          options: {
+            bullet: true,
+            color: "FFFFFF",
+            fontSize: 16,
+            paraSpaceAfter: 12,
+          },
         })),
-     {
-    x: 0.5,
-    y: 1.7
+        {
+          x: 0.5,
+          y: 1.7,
+          w: textWidth,
+        },
+      );
+
+      // 4. Embed Base64 Image
+      if (hasImage) {
+        slide.addImage({
+          data: base64Image, // Use 'data' instead of 'path' for Base64 strings
+          x: 5.8,
+          y: 1.7,
+          w: 3.7,
+          h: 4.5,
+          sizing: { type: "cover" },
+        });
+      }
     }
-  )
-  });
 
     const fileData = await pptx.write("nodebuffer");
 
     res.setHeader(
       "Content-Type",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     );
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="${presentation.title}.pptx"`
+      `attachment; filename="${presentation.title}.pptx"`,
     );
 
     res.send(fileData);
