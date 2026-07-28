@@ -220,13 +220,13 @@ Format:
     let parsedResponse;
 
     try {
-       parsedResponse  = JSON.parse(aiText);
+      parsedResponse = JSON.parse(aiText);
     } catch (err) {
       console.error("JSON Parse Error:", err);
 
       return res.status(500).json({
         success: false,
-       message: "AI returned invalid JSON.",
+        message: "AI returned invalid JSON.",
         raw: aiText,
       });
     }
@@ -259,7 +259,6 @@ Format:
   }
 });
 
-
 router.get("/:id/export", protect, async (req, res) => {
   try {
     const presentation = await Presentation.findOne({
@@ -277,38 +276,66 @@ router.get("/:id/export", protect, async (req, res) => {
     const pptx = new PptxGenJS();
 
     presentation.slides.forEach((slideData) => {
-      const slide = pptx.addSlide();
-      slide.background = { color: "050816" };
-      slide.addText(slideData.title, {
-        x: 0.5,
-        y: 0.3,
-        fontSize: 24,
-        bold: true,
-        color: "67E8F9",
-        paraSpaceAfter: 12
-      });
+  const slide = pptx.addSlide();
+  slide.background = { color: "050816" };
 
-     slide.addText(
-      slideData.content.map((point) => ({
-       text: point,
-      options: { bullet: true, color: "FFFFFF", fontSize: 16,paraSpaceAfter: 12, },
-        })),
-     {
+  // 1. Add Title
+  slide.addText(slideData.title, {
     x: 0.5,
-    y: 1.7
-    }
-  )
+    y: 0.3,
+    fontSize: 24,
+    bold: true,
+    color: "67E8F9",
+    paraSpaceAfter: 12,
   });
+
+  // 2. Determine text width based on whether an image exists
+  // Standard PowerPoint slide width is 10 inches:
+  // - With Image: text width is 5.0" (left half)
+  // - Without Image: text width is 9.0" (full width)
+  const hasImage = Boolean(slideData.imageUrl);
+  const textWidth = hasImage ? 5.0 : 9.0;
+
+  // 3. Add Bullet Points
+  slide.addText(
+    slideData.content.map((point) => ({
+      text: point,
+      options: {
+        bullet: true,
+        color: "FFFFFF",
+        fontSize: 16,
+        paraSpaceAfter: 12,
+      },
+    })),
+    {
+      x: 0.5,
+      y: 1.7,
+      w: textWidth, // Dynamically resizes the text box
+    },
+  );
+
+  // 4. Add Image on the Right Side (if URL exists)
+  if (hasImage) {
+    slide.addImage({
+      path: slideData.imageUrl, // Direct URL to image (Unsplash, S3, etc.)
+      x: 5.8,                   // Start x-position on the right side
+      y: 1.7,                   // Aligns vertically with the top of the content
+      w: 3.7,                   // Image width in inches
+      h: 4.5,                   // Image height in inches
+      sizing: { type: "cover" },// Auto-crops nicely to prevent stretching/distortion
+    });
+  }
+});
 
     const fileData = await pptx.write("nodebuffer");
 
     res.setHeader(
       "Content-Type",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     );
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="${presentation.title}.pptx"`
+      `attachment; filename="${presentation.title}.pptx"`,
     );
 
     res.send(fileData);

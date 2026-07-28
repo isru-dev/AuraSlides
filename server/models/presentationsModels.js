@@ -16,8 +16,8 @@ const presentationsSchema = new mongoose.Schema(
     },
 
     slides: [
-      {     
-        _id: false,  // ← ADD THIS LINE
+      {
+        _id: false, // ← ADD THIS LINE
         slideNumber: {
           type: Number,
           required: true,
@@ -34,6 +34,14 @@ const presentationsSchema = new mongoose.Schema(
           type: String,
           enum: ["title-only", "split-screen", "bullet-list", "minimalist"],
           default: "bullet-list",
+        },
+        imageKeyword: {
+          type: String,
+          default: null,
+        },
+        imageUrl: {
+          type: String,
+          default: null,
         },
       },
     ],
@@ -75,7 +83,7 @@ const presentationsSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const Presentation = mongoose.model("Presentation", presentationsSchema);
