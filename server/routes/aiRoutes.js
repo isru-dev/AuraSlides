@@ -115,7 +115,7 @@ Return this exact format:
         })
       );
     }
-
+   console.log("Generated Slides Output:", JSON.stringify(parsedResponse.slides, null, 2));
     return res.json({
       success: true,
       result: parsedResponse,

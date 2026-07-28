@@ -274,58 +274,76 @@ router.get("/:id/export", protect, async (req, res) => {
     }
 
     const pptx = new PptxGenJS();
+    // Add this helper function at the top of your export route file
+    async function fetchImageAsBase64(url) {
+      if (!url) return null;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) return null;
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const contentType =
+          response.headers.get("content-type") || "image/jpeg";
+        return `data:${contentType};base64,${buffer.toString("base64")}`;
+      } catch (err) {
+        console.error("Failed to convert image to base64:", err);
+        return null;
+      }
+    }
+    // Change forEach to a for...of loop to support await
+    for (const slideData of presentation.slides) {
+      const slide = pptx.addSlide();
+      slide.background = { color: "050816" };
 
-    presentation.slides.forEach((slideData) => {
-  const slide = pptx.addSlide();
-  slide.background = { color: "050816" };
-
-  // 1. Add Title
-  slide.addText(slideData.title, {
-    x: 0.5,
-    y: 0.3,
-    fontSize: 24,
-    bold: true,
-    color: "67E8F9",
-    paraSpaceAfter: 12,
-  });
-
-  // 2. Determine text width based on whether an image exists
-  // Standard PowerPoint slide width is 10 inches:
-  // - With Image: text width is 5.0" (left half)
-  // - Without Image: text width is 9.0" (full width)
-  const hasImage = Boolean(slideData.imageUrl);
-  const textWidth = hasImage ? 5.0 : 9.0;
-
-  // 3. Add Bullet Points
-  slide.addText(
-    slideData.content.map((point) => ({
-      text: point,
-      options: {
-        bullet: true,
-        color: "FFFFFF",
-        fontSize: 16,
+      // 1. Add Title
+      slide.addText(slideData.title, {
+        x: 0.5,
+        y: 0.3,
+        fontSize: 24,
+        bold: true,
+        color: "67E8F9",
         paraSpaceAfter: 12,
-      },
-    })),
-    {
-      x: 0.5,
-      y: 1.7,
-      w: textWidth, // Dynamically resizes the text box
-    },
-  );
+      });
 
-  // 4. Add Image on the Right Side (if URL exists)
-  if (hasImage) {
-    slide.addImage({
-      path: slideData.imageUrl, // Direct URL to image (Unsplash, S3, etc.)
-      x: 5.8,                   // Start x-position on the right side
-      y: 1.7,                   // Aligns vertically with the top of the content
-      w: 3.7,                   // Image width in inches
-      h: 4.5,                   // Image height in inches
-      sizing: { type: "cover" },// Auto-crops nicely to prevent stretching/distortion
-    });
-  }
-});
+      // 2. Pre-fetch image data if URL exists
+      let base64Image = null;
+      if (slideData.imageUrl) {
+        base64Image = await fetchImageAsBase64(slideData.imageUrl);
+      }
+
+      const hasImage = Boolean(base64Image);
+      const textWidth = hasImage ? 5.0 : 9.0;
+
+      // 3. Add Bullet Points
+      slide.addText(
+        slideData.content.map((point) => ({
+          text: point,
+          options: {
+            bullet: true,
+            color: "FFFFFF",
+            fontSize: 16,
+            paraSpaceAfter: 12,
+          },
+        })),
+        {
+          x: 0.5,
+          y: 1.7,
+          w: textWidth,
+        },
+      );
+
+      // 4. Embed Base64 Image
+      if (hasImage) {
+        slide.addImage({
+          data: base64Image, // Use 'data' instead of 'path' for Base64 strings
+          x: 5.8,
+          y: 1.7,
+          w: 3.7,
+          h: 4.5,
+          sizing: { type: "cover" },
+        });
+      }
+    }
 
     const fileData = await pptx.write("nodebuffer");
 
