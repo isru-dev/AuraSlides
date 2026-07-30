@@ -846,62 +846,91 @@ export function Chat() {
                   <Download size={18} /> Download
                 </button>
               </div>
-              <div className="bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl p-4 sm:p-6 lg:p-8">
-                <h1 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] mb-2 break-words">
-                  {selectedPresentation.title}
-                </h1>
-                <p className="text-[#94A3B8] text-xs sm:text-sm mb-6 break-words">
-                  {selectedPresentation.prompt}
-                </p>
+             <div className="bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl p-4 sm:p-6 lg:p-8">
+  {/* Presentation Title + Save Button */}
+  <div className="flex items-center justify-between gap-4 mb-2">
+    <input
+      value={selectedPresentation.title}
+      onChange={(e) => updatePresentationTitle(e.target.value)}
+      className="flex-1 bg-transparent text-3xl font-bold text-white border-none outline-none focus:border-b focus:border-cyan-400"
+    />
 
-                <div className="space-y-5 scrollable-none">
-                  {selectedPresentation.slides &&
-                  selectedPresentation.slides.length > 0 ? (
-                    selectedPresentation.slides.map((slide, index) => (
-                      <div
-                        key={index}
-                        className="bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] rounded-xl p-4 sm:p-6 hover:border-[#06B6D4]/30 transition-all"
-                      >
-                        <h2 className="text-lg sm:text-xl font-bold text-[#67E8F9] mb-4">
-                          Slide {slide.slideNumber}: {slide.title}
-                        </h2>
+    {hasUnsavedChanges && (
+      <button
+        onClick={handleSavePresentation}
+        className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white text-sm font-medium hover:opacity-90 transition cursor-pointer"
+      >
+        Save Changes
+      </button>
+    )}
+  </div>
 
-                        {/* 🖼️ DYNAMIC GRID: Left Bullets, Right Image Preview */}
-                        <div
-                          className={`grid grid-cols-1 ${slide.imageUrl ? "md:grid-cols-2" : "grid-cols-1"} gap-6 items-center`}
-                        >
-                          {/* Bullet Points Column */}
-                          <ul className="space-y-2">
-                            {slide.content?.map((point, idx) => (
-                              <li
-                                key={idx}
-                                className="flex gap-3 text-[#CBD5E1] text-sm sm:text-base"
-                              >
-                                <span className="text-[#06B6D4] mt-1">•</span>
-                                <span className="break-words">{point}</span>
-                              </li>
-                            ))}
-                          </ul>
+  <p className="text-[#94A3B8] text-xs sm:text-sm mb-6 break-words">
+    {selectedPresentation.prompt}
+  </p>
 
-                          {/* Image Preview Column (Renders if slide.imageUrl exists) */}
-                          {slide.imageUrl && (
-                            <div className="w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-white/10 bg-[#0B1220] shadow-lg group relative">
-                              <img
-                                src={slide.imageUrl}
-                                alt={slide.imageKeyword || slide.title}
-                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                loading="lazy"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-[#94A3B8]">No slides generated yet</p>
-                  )}
-                </div>
+  <div className="space-y-5 scrollable-none">
+    {selectedPresentation.slides &&
+    selectedPresentation.slides.length > 0 ? (
+      selectedPresentation.slides.map((slide, index) => (
+        <div
+          key={index}
+          className="bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] rounded-xl p-4 sm:p-6 hover:border-[#06B6D4]/30 transition-all"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-[#67E8F9] font-bold">
+              Slide {slide.slideNumber}:
+            </span>
+
+            <input
+              value={slide.title}
+              onChange={(e) => updateSlideTitle(index, e.target.value)}
+              className="flex-1 bg-transparent text-[#67E8F9] font-bold outline-none border-b border-transparent focus:border-cyan-400"
+            />
+          </div>
+
+          <div
+            className={`grid grid-cols-1 ${
+              slide.imageUrl ? "md:grid-cols-2" : "grid-cols-1"
+            } gap-6 items-center`}
+          >
+            <ul className="space-y-2">
+              {slide.content?.map((point, idx) => (
+                <li
+                  key={idx}
+                  className="flex gap-3 text-[#CBD5E1] text-sm sm:text-base"
+                >
+                  <span className="text-[#06B6D4] mt-1">•</span>
+
+                  <input
+                    value={point}
+                    onChange={(e) =>
+                      updateBullet(index, idx, e.target.value)
+                    }
+                    className="flex-1 bg-transparent text-[#CBD5E1] outline-none border-b border-transparent focus:border-cyan-400"
+                  />
+                </li>
+              ))}
+            </ul>
+
+            {slide.imageUrl && (
+              <div className="w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-white/10 bg-[#0B1220] shadow-lg group relative">
+                <img
+                  src={slide.imageUrl}
+                  alt={slide.imageKeyword || slide.title}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
               </div>
+            )}
+          </div>
+        </div>
+      ))
+    ) : (
+      <p className="text-[#94A3B8]">No slides generated yet</p>
+    )}
+  </div>
+</div>
             </div>
 
             {/* RIGHT: CHAT */}
