@@ -17,7 +17,9 @@ export function Chat() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [editingSlide, setEditingSlide] = useState(null);
+  const [editingField, setEditingField] = useState(null);
   const navigate = useNavigate();
   function handleSetting() {
     setShowSettings(false);
@@ -26,89 +28,84 @@ export function Chat() {
     navigate("/profile");
   }
   const handleDocumentUpload = async () => {
-  if (!selectedFile) return;
+    if (!selectedFile) return;
 
-  const token = localStorage.getItem("userToken");
+    const token = localStorage.getItem("userToken");
 
-  setIsGenerating(true);
+    setIsGenerating(true);
 
-  try {
-    // Upload document to AI
-    const formData = new FormData();
-    formData.append("document", selectedFile);
+    try {
+      // Upload document to AI
+      const formData = new FormData();
+      formData.append("document", selectedFile);
 
-    const aiResponse = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/presentation/document`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const aiResponse = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/presentation/document`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
         },
-        body: formData,
-      }
-    );
-
-    const aiData = await aiResponse.json();
-
-    if (!aiData.success) {
-      alert(aiData.message);
-      return;
-    }
-
-    const generatedSlides = aiData.result.slides;
-    const generatedTitle = aiData.result.title;
-
-    // Save presentation to MongoDB
-    const presentationResponse = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/presentation`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: generatedTitle,
-          prompt: selectedFile.name, // or "Uploaded Document"
-          slides: generatedSlides,
-          themeColor: "#06B6D4",
-        }),
-      }
-    );
-
-    const presentationData = await presentationResponse.json();
-
-    if (presentationData.success) {
-      setHistory((prev) => [
-        presentationData.presentation,
-        ...prev,
-      ]);
-
-      setSelectedPresentation(
-        presentationData.presentation
       );
 
-      setSelectedFile(null);
-      setPromptInput("");
-    } else {
-      alert(presentationData.message);
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Failed to generate presentation.");
-  } finally {
-    setIsGenerating(false);
-  }
-};
- const handleSubmit = (e) => {
-  e.preventDefault();
+      const aiData = await aiResponse.json();
 
-  if (selectedFile) {
-    handleDocumentUpload();
-  } else {
-    handlePromptSubmit(e);
-  }
-};
+      if (!aiData.success) {
+        alert(aiData.message);
+        return;
+      }
+
+      const generatedSlides = aiData.result.slides;
+      const generatedTitle = aiData.result.title;
+
+      // Save presentation to MongoDB
+      const presentationResponse = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/presentation`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: generatedTitle,
+            prompt: selectedFile.name, // or "Uploaded Document"
+            slides: generatedSlides,
+            themeColor: "#06B6D4",
+          }),
+        },
+      );
+
+      const presentationData = await presentationResponse.json();
+
+      if (presentationData.success) {
+        setHistory((prev) => [presentationData.presentation, ...prev]);
+
+        setSelectedPresentation(presentationData.presentation);
+
+        setSelectedFile(null);
+        setPromptInput("");
+      } else {
+        alert(presentationData.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate presentation.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (selectedFile) {
+      handleDocumentUpload();
+    } else {
+      handlePromptSubmit(e);
+    }
+  };
   const handleExport = async () => {
     const token = localStorage.getItem("userToken");
 
@@ -366,6 +363,81 @@ export function Chat() {
     } catch (err) {
       console.error("Rename error:", err);
       alert("Failed to rename presentation");
+    }
+  };
+  const updatePresentationTitle = (value) => {
+    setSelectedPresentation((prev) => ({
+      ...prev,
+      title: value,
+    }));
+
+    setHasUnsavedChanges(true);
+  };
+
+  const updateSlideTitle = (slideIndex, value) => {
+    setSelectedPresentation((prev) => ({
+      ...prev,
+      slides: prev.slides.map((slide, index) =>
+        index === slideIndex ? { ...slide, title: value } : slide,
+      ),
+    }));
+
+    setHasUnsavedChanges(true);
+  };
+
+  const updateBullet = (slideIndex, bulletIndex, value) => {
+    setSelectedPresentation((prev) => ({
+      ...prev,
+      slides: prev.slides.map((slide, index) =>
+        index === slideIndex
+          ? {
+              ...slide,
+              content: slide.content.map((bullet, i) =>
+                i === bulletIndex ? value : bullet,
+              ),
+            }
+          : slide,
+      ),
+    }));
+
+    setHasUnsavedChanges(true);
+  };
+  const handleSavePresentation = async () => {
+    const token = localStorage.getItem("userToken");
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: selectedPresentation.title,
+            prompt: selectedPresentation.prompt,
+            slides: selectedPresentation.slides,
+            themeColor: selectedPresentation.themeColor,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setHasUnsavedChanges(false);
+
+        setHistory((prev) =>
+          prev.map((p) =>
+            p._id === selectedPresentation._id ? selectedPresentation : p,
+          ),
+        );
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
