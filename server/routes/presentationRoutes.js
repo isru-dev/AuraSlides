@@ -469,12 +469,12 @@ router.post("/document", upload.single("document"), async (req, res) => {
   }
   console.log("Characters:", extractedText.length);
 console.log("Words:", extractedText.split(/\s+/).length);
-const MAX_CHARS = 12000;
+/*const MAX_CHARS = 12000;
 
 const documentText =
   extractedText.length > MAX_CHARS
     ? extractedText.slice(0, MAX_CHARS)
-    : extractedText;
+    : extractedText;*/
   const aiPrompt = `
 You are an expert presentation designer.
   
@@ -512,7 +512,7 @@ Rules:
 - Each content item should be plain text.
 Document:
 
-${documentText}`
+${extractedText}`
 ;
 
   const text = await ai.generate(aiPrompt);
