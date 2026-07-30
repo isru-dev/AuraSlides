@@ -25,6 +25,10 @@ async function generate(prompt) {
   return text
     .replace(/```json\s*/g, "")
     .replace(/```\s*/g, "")
+    .replace(/\*\*/g, "")        // Remove bold markers
+    .replace(/\*/g, "")          // Remove italic markers
+    .replace(/__/g, "")
+    .replace(/_/g, "")
     .trim();
 }
 

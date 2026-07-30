@@ -4,7 +4,32 @@ const ai = require("../services/aiProvider");
 const PptxGenJS = require("pptxgenjs");
 const Presentation = require("../models/presentationsModels.js");
 const protect = require("../middleware/authMiddleware.js");
+const upload = require("../middleware/upload");
+const pdf = require("pdf-parse");
+const mammoth = require("mammoth");
+async function fetchImageUrl(keyword) {
+  if (!keyword) return null;
 
+  try {
+    const response = await fetch(
+      `https://api.unsplash.com/search/photos?page=1&per_page=1&query=${encodeURIComponent(keyword)}`,
+      {
+        headers: {
+          Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`,
+        },
+      }
+    );
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+
+    return data.results[0]?.urls?.regular || null;
+  } catch (err) {
+    console.error("Unsplash fetch error:", err);
+    return null;
+  }
+}
 router.post("/", protect, async (req, res) => {
   try {
     const { title, prompt, slides, themeColor } = req.body;
@@ -252,8 +277,8 @@ Format:
             const fetch = (await import("node-fetch")).default;
             const unsplashRes = await fetch(
               `https://api.unsplash.com/search/photos?page=1&query=${encodeURIComponent(
-                slide.imageKeyword
-              )}&per_page=1&client_id=${process.env.UNSPLASH_ACCESS_KEY}`
+                slide.imageKeyword,
+              )}&per_page=1&client_id=${process.env.UNSPLASH_ACCESS_KEY}`,
             );
 
             if (unsplashRes.ok) {
@@ -266,7 +291,10 @@ Format:
               }
             }
           } catch (imgError) {
-            console.error("Failed to fetch image in chat route:", imgError.message);
+            console.error(
+              "Failed to fetch image in chat route:",
+              imgError.message,
+            );
           }
         }
 
@@ -274,7 +302,7 @@ Format:
           ...slide,
           imageUrl: slide.imageUrl || null,
         };
-      })
+      }),
     );
 
     // 4. Update presentation state
@@ -408,4 +436,122 @@ router.get("/:id/export", protect, async (req, res) => {
     });
   }
 });
+
+router.post("/document", upload.single("document"), async (req, res) => {
+  try{
+  const file = req.file;
+
+  if (!file) {
+    return res.status(400).json({
+      success: false,
+      message: "No file uploaded",
+    });
+  }
+
+  let extractedText = "";
+
+  if (file.mimetype === "application/pdf") {
+    const data = await pdf(file.buffer);
+
+    extractedText = data.text;
+  } else if (
+    file.mimetype ===
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  ) {
+    const result = await mammoth.extractRawText({
+      buffer: file.buffer,
+    });
+
+    extractedText = result.value;
+  } else {
+    extractedText = file.buffer.toString("utf8");
+  }
+  console.log("Characters:", extractedText.length);
+console.log("Words:", extractedText.split(/\s+/).length);
+/*const MAX_CHARS = 12000;
+
+const documentText =
+  extractedText.length > MAX_CHARS
+    ? extractedText.slice(0, MAX_CHARS)
+    : extractedText;*/
+  const aiPrompt = `
+You are an expert presentation designer.
+  
+Read the following document.
+
+Generate a professional presentation.
+  Return ONLY valid JSON.
+
+Format:
+
+{
+  "title": "Presentation Title",
+  "slides": [
+    {
+      "slideNumber": 1,
+      "title": "...",
+      "content": [
+        "...",
+        "..."
+      ],
+      "imageKeyword": "..."
+    }
+  ]
+}
+Rules:
+
+- exactly 5 slides
+- concise bullet points
+- preserve important facts
+- imageKeyword for every slide
+- return ONLY JSON
+-- Return plain text only.
+- Do NOT use Markdown.
+- Do NOT use **bold**, *italic*, # headings, or bullet symbols.
+- Each content item should be plain text.
+Document:
+
+${extractedText}`
+;
+
+  const text = await ai.generate(aiPrompt);
+     console.log(text);
+  const parsedResponse = JSON.parse(text);
+   console.log(parsedResponse);
+   console.log(parsedResponse.slides);
+
+
+  if (!parsedResponse.slides || !Array.isArray(parsedResponse.slides)) {
+  return res.status(500).json({
+    success: false,
+    message: "AI did not return a valid slides array.",
+    raw: parsedResponse,
+  });
+}
+
+parsedResponse.slides = await Promise.all(
+  parsedResponse.slides.map(async (slide) => {
+    const imageUrl = await fetchImageUrl(slide.imageKeyword);
+
+    return {
+      ...slide,
+      imageUrl,
+    };
+  })
+);
+
+  res.json({
+    success: true,
+    result: parsedResponse,
+  });
+   } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
 module.exports = router;

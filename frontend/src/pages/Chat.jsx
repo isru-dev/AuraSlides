@@ -16,6 +16,7 @@ export function Chat() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const navigate = useNavigate();
   function handleSetting() {
@@ -24,7 +25,90 @@ export function Chat() {
   function handleProfile() {
     navigate("/profile");
   }
+  const handleDocumentUpload = async () => {
+  if (!selectedFile) return;
 
+  const token = localStorage.getItem("userToken");
+
+  setIsGenerating(true);
+
+  try {
+    // Upload document to AI
+    const formData = new FormData();
+    formData.append("document", selectedFile);
+
+    const aiResponse = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/presentation/document`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      }
+    );
+
+    const aiData = await aiResponse.json();
+
+    if (!aiData.success) {
+      alert(aiData.message);
+      return;
+    }
+
+    const generatedSlides = aiData.result.slides;
+    const generatedTitle = aiData.result.title;
+
+    // Save presentation to MongoDB
+    const presentationResponse = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/presentation`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: generatedTitle,
+          prompt: selectedFile.name, // or "Uploaded Document"
+          slides: generatedSlides,
+          themeColor: "#06B6D4",
+        }),
+      }
+    );
+
+    const presentationData = await presentationResponse.json();
+
+    if (presentationData.success) {
+      setHistory((prev) => [
+        presentationData.presentation,
+        ...prev,
+      ]);
+
+      setSelectedPresentation(
+        presentationData.presentation
+      );
+
+      setSelectedFile(null);
+      setPromptInput("");
+    } else {
+      alert(presentationData.message);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Failed to generate presentation.");
+  } finally {
+    setIsGenerating(false);
+  }
+};
+ const handleSubmit = (e) => {
+  e.preventDefault();
+
+  if (selectedFile) {
+    handleDocumentUpload();
+  } else {
+    handlePromptSubmit(e);
+  }
+};
   const handleExport = async () => {
     const token = localStorage.getItem("userToken");
 
@@ -463,7 +547,7 @@ export function Chat() {
     </div>
   );
 
- return (
+  return (
     <div className="min-h-screen bg-[#050816] text-[#F8FAFC] flex font-sans select-none overflow-hidden">
       {/* ============ DESKTOP SIDEBAR ============ */}
       <aside className="w-64 border-r border-[rgba(255,255,255,0.06)] bg-[#0B1220]/30 backdrop-blur-xl hidden md:flex flex-col p-4 justify-between">
@@ -639,18 +723,21 @@ export function Chat() {
           </div>
 
           {showSettings && (
-            <>     
-            <div onClick={handleSetting} className="fixed inset-0 bg-black/10 z-40"/>
-            <div className="absolute right-4 bottom-16 w-40 rounded-xl bg-[#111827] border border-[rgba(255,255,255,0.06)] shadow-xl overflow-hidden">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-4 py-3 text-red-400 hover:bg-[#1F2937] transition-colors"
-              >
-                <LogOut size={18} />
-                <span>Logout</span>
-              </button>
-            </div>
-             </>
+            <>
+              <div
+                onClick={handleSetting}
+                className="fixed inset-0 bg-black/10 z-40"
+              />
+              <div className="absolute right-4 bottom-16 w-40 rounded-xl bg-[#111827] border border-[rgba(255,255,255,0.06)] shadow-xl overflow-hidden">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-red-400 hover:bg-[#1F2937] transition-colors"
+                >
+                  <LogOut size={18} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            </>
           )}
         </div>
       </aside>
@@ -680,7 +767,10 @@ export function Chat() {
             {/* LEFT: PRESENTATION */}
             <div className="w-full lg:flex-[1.8] overflow-y-auto scrollable-none justify-end">
               <div className=" flex items-center gap-2 px-4 py-3 text-[#67E8F9] justify-end ">
-                <button onClick={handleExport} className="cursor-pointer flex items-center gap-2 hover:text-white transition-colors">
+                <button
+                  onClick={handleExport}
+                  className="cursor-pointer flex items-center gap-2 hover:text-white transition-colors"
+                >
                   <Download size={18} /> Download
                 </button>
               </div>
@@ -705,8 +795,9 @@ export function Chat() {
                         </h2>
 
                         {/* 🖼️ DYNAMIC GRID: Left Bullets, Right Image Preview */}
-                        <div className={`grid grid-cols-1 ${slide.imageUrl ? 'md:grid-cols-2' : 'grid-cols-1'} gap-6 items-center`}>
-                          
+                        <div
+                          className={`grid grid-cols-1 ${slide.imageUrl ? "md:grid-cols-2" : "grid-cols-1"} gap-6 items-center`}
+                        >
                           {/* Bullet Points Column */}
                           <ul className="space-y-2">
                             {slide.content?.map((point, idx) => (
@@ -729,10 +820,8 @@ export function Chat() {
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 loading="lazy"
                               />
-                              
                             </div>
                           )}
-
                         </div>
                       </div>
                     ))
@@ -854,41 +943,89 @@ export function Chat() {
         {!selectedPresentation && (
           <div className="w-full max-w-2xl pb-8 sm:pb-12 z-10 mt-[40px]">
             <form
-              onSubmit={handlePromptSubmit}
+              onSubmit={handleSubmit} // Change from handlePromptSubmit
               className="w-full bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-2xl rounded-2xl p-2.5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] flex flex-col gap-2.5 focus-within:border-[#06B6D4]/40 focus-within:ring-1 focus-within:ring-[#06B6D4]/10 transition-all duration-300"
             >
+              {/* Prompt */}
               <textarea
                 value={promptInput}
-                onChange={(e) => setPromptInput(e.target.value)}
+                onChange={(e) => {
+                  setPromptInput(e.target.value);
+
+                  // Optional: clear uploaded file if user starts typing
+                  if (selectedFile) setSelectedFile(null);
+                }}
                 rows={3}
-                disabled={isGenerating}
+                disabled={isGenerating || selectedFile}
                 placeholder="Structure a 5-slide presentation on Computer Architecture layers and processing targets..."
                 className="w-full bg-transparent border-none text-sm text-[#F8FAFC] placeholder-[#94A3B8]/30 px-3 pt-2 resize-none focus:outline-none leading-relaxed"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    handlePromptSubmit(e);
+                    handleSubmit(e);
                   }
                 }}
               />
 
+              {/* File Upload */}
+              <div className="px-3">
+                <label
+                  htmlFor="document-upload"
+                  className="flex flex-col items-center justify-center gap-2 py-5 border border-dashed border-[#06B6D4]/40 rounded-xl cursor-pointer hover:border-[#06B6D4] hover:bg-[#111827]/40 transition-all"
+                >
+                  <span className="text-3xl">📄</span>
+
+                  <p className="text-sm text-[#CBD5E1] font-medium">
+                    {selectedFile
+                      ? selectedFile.name
+                      : "Upload PDF, DOCX or TXT"}
+                  </p>
+
+                  <p className="text-xs text-[#94A3B8]">
+                    Click to browse your document
+                  </p>
+                </label>
+
+                <input
+                  id="document-upload"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.txt"
+                  className="hidden"
+                  onChange={(e) => {
+                    setSelectedFile(e.target.files[0]);
+
+                    // Optional: clear prompt if uploading a document
+                    setPromptInput("");
+                  }}
+                />
+              </div>
+
+              {/* Bottom Bar */}
               <div className="flex items-center justify-between border-t border-[rgba(255,255,255,0.04)] pt-2.5 px-2">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[11px] text-[#94A3B8] font-medium bg-[#111827]/80 border border-[rgba(255,255,255,0.04)] rounded-lg px-2.5 py-1">
-                    💡 Tip: Be descriptive
+                    {selectedFile
+                      ? "📄 Document Ready"
+                      : "💡 Tip: Be descriptive"}
                   </span>
                 </div>
 
                 <button
                   type="submit"
+                  disabled={
+                    (!promptInput.trim() && !selectedFile) || isGenerating
+                  }
                   className={`py-2 px-4 rounded-xl font-medium text-xs text-white shadow-md flex items-center gap-1.5 transition-all duration-300 cursor-pointer ${
-                    promptInput.trim()
+                    promptInput.trim() || selectedFile
                       ? "bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] hover:opacity-90 shadow-[0_0_15px_rgba(6,182,212,0.25)] hover:scale-[1.02]"
                       : "bg-white/[0.04] text-[#94A3B8]/40 border border-white/[0.02] cursor-not-allowed"
                   }`}
-                  disabled={!promptInput.trim()}
                 >
-                  {isGenerating ? "Generating..." : "Generate Slides ➔"}
+                  {isGenerating
+                    ? "Generating..."
+                    : selectedFile
+                      ? "Generate from Document ➜"
+                      : "Generate Slides ➜"}
                 </button>
               </div>
             </form>
