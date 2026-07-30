@@ -13,7 +13,7 @@ async function fetchImageUrl(keyword) {
         headers: {
           Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`,
         },
-      }
+      },
     );
 
     if (!response.ok) return null;
@@ -103,7 +103,7 @@ Return this exact format:
       });
     }
 
-    // 📸 Fetch Unsplash image URLs for each slide concurrently
+    // Fetch Unsplash image URLs for each slide concurrently
     if (parsedResponse.slides && Array.isArray(parsedResponse.slides)) {
       parsedResponse.slides = await Promise.all(
         parsedResponse.slides.map(async (slide) => {
@@ -112,10 +112,13 @@ Return this exact format:
             ...slide,
             imageUrl: imageUrl, // Adds high-res image URL to the slide object
           };
-        })
+        }),
       );
     }
-   console.log("Generated Slides Output:", JSON.stringify(parsedResponse.slides, null, 2));
+    console.log(
+      "Generated Slides Output:",
+      JSON.stringify(parsedResponse.slides, null, 2),
+    );
     return res.json({
       success: true,
       result: parsedResponse,

@@ -32,8 +32,8 @@ router.post("/", protect, async (req, res) => {
 router.get("/:id", protect, async (req, res) => {
   try {
     const presentation = await Presentation.findOne({
-      _id: req.params.id, //presenation id
-      owner: req.user.id, // person id
+      _id: req.params.id, //presenation id 
+      owner: req.user.id, // person id from protect miidleware
     });
     if (!presentation) {
       return res.status(404).json({
@@ -171,7 +171,6 @@ router.post("/:id/chat", protect, async (req, res) => {
       content: message,
     });
 
-    // 2. Updated Prompt: Ask AI to include imageKeyword
     const aiPrompt = `
 You are an expert presentation assistant.
 
