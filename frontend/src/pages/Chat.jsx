@@ -85,7 +85,7 @@ export function Chat() {
     setHasUnsavedChanges(true);
     setIsImageModalOpen(false); // Close modal
   };
-
+ 
   function handleSetting() {
     setShowSettings(false);
   }
