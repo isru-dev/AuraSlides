@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, MoreVertical, Pencil, Trash2, Download } from "lucide-react";
+import { toast } from 'react-hot-toast';
 
 export function Chat() {
   const [history, setHistory] = useState([]);
@@ -107,16 +108,21 @@ export function Chat() {
     }
   };
   const handleExport = async () => {
-    const token = localStorage.getItem("userToken");
+  const token = localStorage.getItem("userToken");
 
+  try {
     const response = await fetch(
       `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}/export`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      },
+      }
     );
+
+    if (!response.ok) {
+      throw new Error("Download failed");
+    }
 
     const blob = await response.blob();
 
@@ -125,10 +131,18 @@ export function Chat() {
     const link = document.createElement("a");
     link.href = url;
     link.download = `${selectedPresentation.title}.pptx`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
 
     window.URL.revokeObjectURL(url);
-  };
+
+    toast.success("Presentation downloaded successfully!");
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to download presentation.");
+  }
+};
   function handleProfile() {
     navigate("/profile");
   }
@@ -427,7 +441,7 @@ export function Chat() {
 
       if (data.success) {
         setHasUnsavedChanges(false);
-
+        toast.success('Successfully saved !');
         setHistory((prev) =>
           prev.map((p) =>
             p._id === selectedPresentation._id ? selectedPresentation : p,
@@ -438,6 +452,8 @@ export function Chat() {
       }
     } catch (err) {
       console.error(err);
+      toast.error("")
+
     }
   };
 
