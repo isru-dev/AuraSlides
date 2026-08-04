@@ -1,6 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, MoreVertical, Pencil, Trash2, Download ,ImageIcon ,X ,Search,Plus} from "lucide-react";
+import {
+  LogOut,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Download,
+  ImageIcon,
+  X,
+  Search,
+  Plus,
+} from "lucide-react";
 import { toast } from "react-hot-toast";
 
 export function Chat() {
@@ -26,34 +36,34 @@ export function Chat() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchingImages, setIsSearchingImages] = useState(false);
-
+  const [isDownloading, setisDownloading] = useState(false);
   const navigate = useNavigate();
 
-   const handleRemoveImage = (slideIndex) => {
-  if (!selectedPresentation) return;
+  const handleRemoveImage = (slideIndex) => {
+    if (!selectedPresentation) return;
 
-  setSelectedPresentation((prev) => {
-    if (!prev) return prev;
+    setSelectedPresentation((prev) => {
+      if (!prev) return prev;
 
-    const updatedSlides = prev.slides.map((slide, i) => {
-      if (i === slideIndex) {
-        return {
-          ...slide,
-          imageUrl: "",     // Clear image URL
-          imageKeyword: "", // Clear image keyword
-        };
-      }
-      return slide;
+      const updatedSlides = prev.slides.map((slide, i) => {
+        if (i === slideIndex) {
+          return {
+            ...slide,
+            imageUrl: "", // Clear image URL
+            imageKeyword: "", // Clear image keyword
+          };
+        }
+        return slide;
+      });
+
+      return {
+        ...prev,
+        slides: updatedSlides,
+      };
     });
 
-    return {
-      ...prev,
-      slides: updatedSlides,
-    };
-  });
-
-  setHasUnsavedChanges(true);
-};
+    setHasUnsavedChanges(true);
+  };
   const handleOpenImageModal = (slideIndex, currentKeyword, currentTitle) => {
     setActiveSlideIndex(slideIndex);
     const initialQuery = currentKeyword || currentTitle || "technology";
@@ -197,47 +207,50 @@ export function Chat() {
     }
   };
   const handleExport = async () => {
-  const token = localStorage.getItem("userToken");
+    const token = localStorage.getItem("userToken");
 
-  try {
-    // 1. Save latest changes to MongoDB FIRST so backend export route has new images!
-    if (hasUnsavedChanges) {
-      toast.info("Saving changes before exporting...");
-      await handleSavePresentation();
-    }
-
-    // 2. Fetch the exported PPTX file from backend
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}/export`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    try {
+      // 1. Save latest changes to MongoDB FIRST so backend export route has new images!
+      if (hasUnsavedChanges) {
+        toast.info("Saving changes before exporting...");
+        await handleSavePresentation();
       }
-    );
+      setisDownloading(true);
 
-    if (!response.ok) {
-      throw new Error("Download failed");
+      // 2. Fetch the exported PPTX file from backend
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}/export`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Download failed");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${selectedPresentation.title}.pptx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Presentation downloaded successfully!");
+      setisDownloading(false);
+
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to download presentation.");
     }
-
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${selectedPresentation.title}.pptx`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    window.URL.revokeObjectURL(url);
-
-    toast.success("Presentation downloaded successfully!");
-  } catch (error) {
-    console.error(error);
-    toast.error("Failed to download presentation.");
-  }
-};
+  };
   function handleProfile() {
     navigate("/profile");
   }
@@ -512,60 +525,60 @@ export function Chat() {
     setHasUnsavedChanges(true);
   };
   const handleSavePresentation = async () => {
-  if (!selectedPresentation?._id) return false;
+    if (!selectedPresentation?._id) return false;
 
-  const token = localStorage.getItem("userToken");
-  if (!token) {
-    toast.error("Authentication session expired. Please log in again.");
-    return false;
-  }
-
-  try {
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: selectedPresentation.title,
-          prompt: selectedPresentation.prompt,
-          slides: selectedPresentation.slides, // Includes updated imageUrls
-          themeColor: selectedPresentation.themeColor,
-        }),
-      }
-    );
-
-    const data = await response.json();
-
-    if (data.success) {
-      // Use updated document returned from DB or fallback to current state
-      const updatedPresentation = data.presentation || selectedPresentation;
-
-      setSelectedPresentation(updatedPresentation);
-      setHasUnsavedChanges(false);
-      toast.success("Successfully saved!");
-
-      // Update sidebar history state
-      setHistory((prev) =>
-        prev.map((p) =>
-          p._id === updatedPresentation._id ? updatedPresentation : p
-        )
-      );
-
-      return true; // Indicates success for callers like handleExport
-    } else {
-      toast.error(data.message || "Failed to save presentation.");
+    const token = localStorage.getItem("userToken");
+    if (!token) {
+      toast.error("Authentication session expired. Please log in again.");
       return false;
     }
-  } catch (err) {
-    console.error("Save error:", err);
-    toast.error("An error occurred while saving.");
-    return false;
-  }
-};
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: selectedPresentation.title,
+            prompt: selectedPresentation.prompt,
+            slides: selectedPresentation.slides, // Includes updated imageUrls
+            themeColor: selectedPresentation.themeColor,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Use updated document returned from DB or fallback to current state
+        const updatedPresentation = data.presentation || selectedPresentation;
+
+        setSelectedPresentation(updatedPresentation);
+        setHasUnsavedChanges(false);
+        toast.success("Successfully saved!");
+
+        // Update sidebar history state
+        setHistory((prev) =>
+          prev.map((p) =>
+            p._id === updatedPresentation._id ? updatedPresentation : p,
+          ),
+        );
+
+        return true; // Indicates success for callers like handleExport
+      } else {
+        toast.error(data.message || "Failed to save presentation.");
+        return false;
+      }
+    } catch (err) {
+      console.error("Save error:", err);
+      toast.error("An error occurred while saving.");
+      return false;
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("userToken");
@@ -1107,45 +1120,62 @@ export function Chat() {
                             ))}
                           </ul>
 
-                         {/* Slide Image Preview Container */}
-{slide.imageUrl ? (
-  <div className="w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-white/10 bg-[#0B1220] shadow-lg group relative">
-    <img
-      src={slide.imageUrl}
-      alt={slide.imageKeyword || slide.title}
-      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-      loading="lazy"
-    />
+                          {/* Slide Image Preview Container */}
+                          {slide.imageUrl ? (
+                            <div className="w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-white/10 bg-[#0B1220] shadow-lg group relative">
+                              <img
+                                src={slide.imageUrl}
+                                alt={slide.imageKeyword || slide.title}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                loading="lazy"
+                              />
 
-    {/* Hover Action Overlay */}
-    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-3">
-      {/* Change Image Button */}
-      <button
-        onClick={() => handleOpenImageModal(index, slide.imageKeyword, slide.title)}
-        className="px-3.5 py-2 rounded-lg bg-[#06B6D4] text-white text-xs font-semibold hover:bg-[#0891B2] transition flex items-center gap-1.5 cursor-pointer shadow-lg"
-      >
-        <ImageIcon size={15} /> Change
-      </button>
+                              {/* Hover Action Overlay */}
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-3">
+                                {/* Change Image Button */}
+                                <button
+                                  onClick={() =>
+                                    handleOpenImageModal(
+                                      index,
+                                      slide.imageKeyword,
+                                      slide.title,
+                                    )
+                                  }
+                                  className="px-3.5 py-2 rounded-lg bg-[#06B6D4] text-white text-xs font-semibold hover:bg-[#0891B2] transition flex items-center gap-1.5 cursor-pointer shadow-lg"
+                                >
+                                  <ImageIcon size={15} /> Change
+                                </button>
 
-      {/* Delete Image Button */}
-      <button
-        onClick={() => handleRemoveImage(index)}
-        className="px-3.5 py-2 rounded-lg bg-red-500/80 hover:bg-red-600 text-white text-xs font-semibold backdrop-blur-md transition flex items-center gap-1.5 cursor-pointer shadow-lg"
-      >
-        <Trash2 size={15} /> Delete
-      </button>
-    </div>
-  </div>
-) : (
-  /* Empty State Placeholder if Slide Has No Image */
-  <button
-    onClick={() => handleOpenImageModal(index, slide.imageKeyword, slide.title)}
-    className="w-full h-32 rounded-xl border border-dashed border-white/15 bg-[#0B1220]/40 flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-white hover:border-[#06B6D4] transition cursor-pointer group"
-  >
-    <Plus size={20} className="text-slate-500 group-hover:text-[#06B6D4] transition" />
-    <span className="text-xs font-medium">Add Image to Slide</span>
-  </button>
-)}
+                                {/* Delete Image Button */}
+                                <button
+                                  onClick={() => handleRemoveImage(index)}
+                                  className="px-3.5 py-2 rounded-lg bg-red-500/80 hover:bg-red-600 text-white text-xs font-semibold backdrop-blur-md transition flex items-center gap-1.5 cursor-pointer shadow-lg"
+                                >
+                                  <Trash2 size={15} /> Delete
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            /* Empty State Placeholder if Slide Has No Image */
+                            <button
+                              onClick={() =>
+                                handleOpenImageModal(
+                                  index,
+                                  slide.imageKeyword,
+                                  slide.title,
+                                )
+                              }
+                              className="w-full h-32 rounded-xl border border-dashed border-white/15 bg-[#0B1220]/40 flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-white hover:border-[#06B6D4] transition cursor-pointer group"
+                            >
+                              <Plus
+                                size={20}
+                                className="text-slate-500 group-hover:text-[#06B6D4] transition"
+                              />
+                              <span className="text-xs font-medium">
+                                Add Image to Slide
+                              </span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))
@@ -1262,7 +1292,19 @@ export function Chat() {
             </span>
           </div>
         )}
-
+        {isDownloading && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="flex flex-col items-center justify-center gap-3 bg-[#0B1220] border border-white/10 p-6 rounded-2xl shadow-2xl">
+              <div className="w-8 h-8 border-3 border-[#06B6D4] border-t-transparent rounded-full animate-spin" />
+              <h1 className="text-white text-base font-semibold tracking-wide">
+                Downloading presentation...
+              </h1>
+              <p className="text-xs text-slate-400">
+                Generating your file, please wait.
+              </p>
+            </div>
+          </div>
+        )}
         {/* PROMPT INPUT FORM */}
         {!selectedPresentation && (
           <div className="w-full max-w-2xl pb-8 sm:pb-12 z-10 mt-[40px]">
