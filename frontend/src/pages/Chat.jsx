@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, MoreVertical, Pencil, Trash2, Download } from "lucide-react";
-import { toast } from 'react-hot-toast';
+import { LogOut, MoreVertical, Pencil, Trash2, Download ,ImageIcon ,X ,Search} from "lucide-react";
+import { toast } from "react-hot-toast";
 
 export function Chat() {
   const [history, setHistory] = useState([]);
@@ -21,7 +21,71 @@ export function Chat() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [editingSlide, setEditingSlide] = useState(null);
   const [editingField, setEditingField] = useState(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchingImages, setIsSearchingImages] = useState(false);
+
   const navigate = useNavigate();
+
+  const handleOpenImageModal = (slideIndex, currentKeyword, currentTitle) => {
+    setActiveSlideIndex(slideIndex);
+    const initialQuery = currentKeyword || currentTitle || "technology";
+    setSearchQuery(initialQuery);
+    setIsImageModalOpen(true);
+
+    // Fetch initial results immediately when opening
+    fetchBackendImages(initialQuery);
+  };
+
+  // 2. Fetch images from your BACKEND endpoint
+  const fetchBackendImages = async (query) => {
+    if (!query.trim()) return;
+    setIsSearchingImages(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/presentation/images/search?query=${encodeURIComponent(query)}`,
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        setSearchResults(data.results);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch images from server:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearchingImages(false);
+    }
+  };
+
+  // 3. Update Presentation Slide with the chosen image
+  const handleSelectImage = (newImageUrl) => {
+    if (activeSlideIndex === null) return;
+
+    setSelectedPresentation((prev) => {
+      if (!prev) return prev;
+
+      const updatedSlides = [...prev.slides];
+      updatedSlides[activeSlideIndex] = {
+        ...updatedSlides[activeSlideIndex],
+        imageUrl: newImageUrl,
+      };
+
+      return {
+        ...prev,
+        slides: updatedSlides,
+      };
+    });
+
+    setHasUnsavedChanges(true);
+    setIsImageModalOpen(false); // Close modal
+  };
+
   function handleSetting() {
     setShowSettings(false);
   }
@@ -111,6 +175,13 @@ export function Chat() {
   const token = localStorage.getItem("userToken");
 
   try {
+    // 1. Save latest changes to MongoDB FIRST so backend export route has new images!
+    if (hasUnsavedChanges) {
+      toast.info("Saving changes before exporting...");
+      await handleSavePresentation();
+    }
+
+    // 2. Fetch the exported PPTX file from backend
     const response = await fetch(
       `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}/export`,
       {
@@ -125,7 +196,6 @@ export function Chat() {
     }
 
     const blob = await response.blob();
-
     const url = window.URL.createObjectURL(blob);
 
     const link = document.createElement("a");
@@ -417,45 +487,60 @@ export function Chat() {
     setHasUnsavedChanges(true);
   };
   const handleSavePresentation = async () => {
-    const token = localStorage.getItem("userToken");
+  if (!selectedPresentation?._id) return false;
 
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            title: selectedPresentation.title,
-            prompt: selectedPresentation.prompt,
-            slides: selectedPresentation.slides,
-            themeColor: selectedPresentation.themeColor,
-          }),
+  const token = localStorage.getItem("userToken");
+  if (!token) {
+    toast.error("Authentication session expired. Please log in again.");
+    return false;
+  }
+
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({
+          title: selectedPresentation.title,
+          prompt: selectedPresentation.prompt,
+          slides: selectedPresentation.slides, // Includes updated imageUrls
+          themeColor: selectedPresentation.themeColor,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Use updated document returned from DB or fallback to current state
+      const updatedPresentation = data.presentation || selectedPresentation;
+
+      setSelectedPresentation(updatedPresentation);
+      setHasUnsavedChanges(false);
+      toast.success("Successfully saved!");
+
+      // Update sidebar history state
+      setHistory((prev) =>
+        prev.map((p) =>
+          p._id === updatedPresentation._id ? updatedPresentation : p
+        )
       );
 
-      const data = await response.json();
-
-      if (data.success) {
-        setHasUnsavedChanges(false);
-        toast.success('Successfully saved !');
-        setHistory((prev) =>
-          prev.map((p) =>
-            p._id === selectedPresentation._id ? selectedPresentation : p,
-          ),
-        );
-      } else {
-        alert(data.message);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("")
-
+      return true; // Indicates success for callers like handleExport
+    } else {
+      toast.error(data.message || "Failed to save presentation.");
+      return false;
     }
-  };
+  } catch (err) {
+    console.error("Save error:", err);
+    toast.error("An error occurred while saving.");
+    return false;
+  }
+};
 
   useEffect(() => {
     const token = localStorage.getItem("userToken");
@@ -505,7 +590,6 @@ export function Chat() {
       });
   }, []);
 
-  // Reusable component for rendering a single presentation item in the sidebar
   const PresentationItem = ({ presentation, onSelect, isMobile }) => (
     <div
       className={`group relative p-3 rounded-lg cursor-pointer transition-all 
@@ -930,26 +1014,29 @@ export function Chat() {
                           <span className="text-[#67E8F9] font-bold shrink-0">
                             Slide {slide.slideNumber}:
                           </span>
-                       <div className="group flex items-center justify-between gap-2">
-                          <span
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) =>
-                              updateSlideTitle(index, e.currentTarget.innerText)
-                            }
-                            className=" bg-transparent text-[#67E8F9] font-bold transition-colors cursor-text group-hover:text-white focus:text-white focus:bg-[#1E293B] rounded px-1.5 py-0.5 outline-none break-words"
-                          >
-                            {slide.title}
-                          </span>
+                          <div className="group flex items-center justify-between gap-2">
+                            <span
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e) =>
+                                updateSlideTitle(
+                                  index,
+                                  e.currentTarget.innerText,
+                                )
+                              }
+                              className=" bg-transparent text-[#67E8F9] font-bold transition-colors cursor-text group-hover:text-white focus:text-white focus:bg-[#1E293B] rounded px-1.5 py-0.5 outline-none break-words"
+                            >
+                              {slide.title}
+                            </span>
 
-                          <Pencil
-                            size={20}
-                            onClick={handleFocusAtEnd}
-                            onMouseEnter={handleFocusAtEnd}
-                            className="opacity-0 group-hover:opacity-100 text-slate-400 group-hover:text-white transition-all cursor-pointer shrink-0"
-                          />
+                            <Pencil
+                              size={20}
+                              onClick={handleFocusAtEnd}
+                              onMouseEnter={handleFocusAtEnd}
+                              className="opacity-0 group-hover:opacity-100 text-slate-400 group-hover:text-white transition-all cursor-pointer shrink-0"
+                            />
                           </div>
-             </div>
+                        </div>
 
                         {/* SLIDE CONTENT & IMAGE */}
                         <div
@@ -995,8 +1082,8 @@ export function Chat() {
                             ))}
                           </ul>
 
-                          {/* Image Preview */}
-                          {slide.imageUrl && (
+                          {/* Slide Image Container */}
+                          {slide.imageUrl ? (
                             <div className="w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-white/10 bg-[#0B1220] shadow-lg group relative">
                               <img
                                 src={slide.imageUrl}
@@ -1004,7 +1091,39 @@ export function Chat() {
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 loading="lazy"
                               />
+
+                              {/* Hover Action Overlay */}
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-3">
+                                <button
+                                  onClick={() =>
+                                    handleOpenImageModal(
+                                      index,
+                                      slide.imageKeyword,
+                                      slide.title,
+                                    )
+                                  }
+                                  className="px-3.5 py-2 rounded-lg bg-[#06B6D4] text-white text-xs font-semibold hover:bg-[#0891B2] transition flex items-center gap-2 cursor-pointer shadow-lg"
+                                >
+                                  <ImageIcon size={16} /> Change Image
+                                </button>
+                              </div>
                             </div>
+                          ) : (
+                            <button
+                              onClick={() =>
+                                handleOpenImageModal(
+                                  index,
+                                  slide.imageKeyword,
+                                  slide.title,
+                                )
+                              }
+                              className="w-full h-48 sm:h-56 rounded-xl border border-dashed border-white/20 bg-[#0B1220]/40 flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-white hover:border-[#06B6D4] transition cursor-pointer"
+                            >
+                              <ImageIcon size={24} />
+                              <span className="text-xs font-medium">
+                                Add Slide Image
+                              </span>
+                            </button>
                           )}
                         </div>
                       </div>
@@ -1213,6 +1332,92 @@ export function Chat() {
             <div className="text-center text-[10px] text-[#94A3B8]/40 mt-3 tracking-wide">
               AuraSlides uses deep learning layers. Review generated files for
               precise structural metrics.
+            </div>
+          </div>
+        )}
+        {/* IMAGE SEARCH MODAL */}
+        {isImageModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+            <div className="w-full max-w-2xl bg-[#0B1220] border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col gap-5">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <ImageIcon className="text-[#06B6D4]" size={20} /> Change
+                  Slide Image
+                </h3>
+                <button
+                  onClick={() => setIsImageModalOpen(false)}
+                  className="text-slate-400 hover:text-white p-1 rounded-lg transition cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Search Input Form */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  fetchBackendImages(searchQuery);
+                }}
+                className="flex gap-2"
+              >
+                <div className="relative flex-1">
+                  <Search
+                    size={18}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search keywords..."
+                    className="w-full bg-[#111827] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#06B6D4]"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white text-sm font-medium hover:opacity-90 transition cursor-pointer shrink-0"
+                >
+                  Search
+                </button>
+              </form>
+
+              {/* Search Results Display */}
+              <div className="min-h-[260px] max-h-[360px] overflow-y-auto">
+                {isSearchingImages ? (
+                  <div className="flex flex-col items-center justify-center h-48 gap-3 text-slate-400">
+                    <div className="w-6 h-6 border-2 border-[#06B6D4] border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs">
+                      Fetching images from server...
+                    </span>
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {searchResults.map((img) => (
+                      <div
+                        key={img.id}
+                        onClick={() => handleSelectImage(img.full)}
+                        className="group relative h-28 rounded-xl overflow-hidden border border-white/10 cursor-pointer hover:border-[#06B6D4] transition-all"
+                      >
+                        <img
+                          src={img.thumb}
+                          alt={img.alt}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-[#06B6D4]/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="text-[10px] uppercase tracking-wider font-bold text-white bg-black/70 px-2 py-1 rounded">
+                            Select
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-48 text-slate-500 text-sm">
+                    No images found. Try another search term.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

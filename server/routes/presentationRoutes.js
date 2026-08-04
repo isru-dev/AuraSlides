@@ -30,6 +30,7 @@ async function fetchImageUrl(keyword) {
     return null;
   }
 }
+
 router.post("/", protect, async (req, res) => {
   try {
     const { title, prompt, slides, themeColor } = req.body;
@@ -553,5 +554,41 @@ parsedResponse.slides = await Promise.all(
     });
   }
 });
+router.get("/images/search", async (req, res) => {
+  const { query, count = 8 } = req.query;
 
+  if (!query) {
+    return res.status(400).json({ success: false, message: "Query required" });
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.unsplash.com/search/photos?page=1&per_page=${count}&query=${encodeURIComponent(query)}`,
+      {
+        headers: {
+          Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return res.status(response.status).json({ success: false, results: [] });
+    }
+
+    const data = await response.json();
+
+    // Map into clean format for frontend
+    const results = (data.results || []).map((img) => ({
+      id: img.id,
+      thumb: img.urls?.small,
+      full: img.urls?.regular,
+      alt: img.alt_description || query,
+    }));
+
+    res.json({ success: true, results });
+  } catch (err) {
+    console.error("Unsplash fetch error:", err);
+    res.status(500).json({ success: false, results: [] });
+  }
+});
 module.exports = router;
