@@ -846,91 +846,132 @@ export function Chat() {
                   <Download size={18} /> Download
                 </button>
               </div>
-             <div className="bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl p-4 sm:p-6 lg:p-8">
-  {/* Presentation Title + Save Button */}
-  <div className="flex items-center justify-between gap-4 mb-2">
-    <input
-      value={selectedPresentation.title}
-      onChange={(e) => updatePresentationTitle(e.target.value)}
-      className="flex-1 bg-transparent text-3xl font-bold text-white border-none outline-none focus:border-b focus:border-cyan-400"
-    />
-
-    {hasUnsavedChanges && (
-      <button
-        onClick={handleSavePresentation}
-        className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white text-sm font-medium hover:opacity-90 transition cursor-pointer"
-      >
-        Save Changes
-      </button>
-    )}
-  </div>
-
-  <p className="text-[#94A3B8] text-xs sm:text-sm mb-6 break-words">
-    {selectedPresentation.prompt}
-  </p>
-
-  <div className="space-y-5 scrollable-none">
-    {selectedPresentation.slides &&
-    selectedPresentation.slides.length > 0 ? (
-      selectedPresentation.slides.map((slide, index) => (
-        <div
-          key={index}
-          className="bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] rounded-xl p-4 sm:p-6 hover:border-[#06B6D4]/30 transition-all"
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-[#67E8F9] font-bold">
-              Slide {slide.slideNumber}:
-            </span>
-
-            <input
-              value={slide.title}
-              onChange={(e) => updateSlideTitle(index, e.target.value)}
-              className="flex-1 bg-transparent text-[#67E8F9] font-bold outline-none border-b border-transparent focus:border-cyan-400"
-            />
-          </div>
-
-          <div
-            className={`grid grid-cols-1 ${
-              slide.imageUrl ? "md:grid-cols-2" : "grid-cols-1"
-            } gap-6 items-center`}
-          >
-            <ul className="space-y-2">
-              {slide.content?.map((point, idx) => (
-                <li
-                  key={idx}
-                  className="flex gap-3 text-[#CBD5E1] text-sm sm:text-base"
-                >
-                  <span className="text-[#06B6D4] mt-1">•</span>
-
+              <div className="bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl p-4 sm:p-6 lg:p-8">
+                {/* Presentation Title + Save Button */}
+                <div className="flex items-center justify-between gap-4 mb-2">
                   <input
-                    value={point}
-                    onChange={(e) =>
-                      updateBullet(index, idx, e.target.value)
-                    }
-                    className="flex-1 bg-transparent text-[#CBD5E1] outline-none border-b border-transparent focus:border-cyan-400"
+                    value={selectedPresentation.title}
+                    onChange={(e) => updatePresentationTitle(e.target.value)}
+                    className="flex-1 bg-transparent text-3xl font-bold text-white border-none outline-none focus:border-b focus:border-cyan-400"
                   />
-                </li>
-              ))}
-            </ul>
 
-            {slide.imageUrl && (
-              <div className="w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-white/10 bg-[#0B1220] shadow-lg group relative">
-                <img
-                  src={slide.imageUrl}
-                  alt={slide.imageKeyword || slide.title}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                />
-              </div>
-            )}
-          </div>
+                  {hasUnsavedChanges && (
+                    <button
+                      onClick={handleSavePresentation}
+                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white text-sm font-medium hover:opacity-90 transition cursor-pointer"
+                    >
+                      Save Changes
+                    </button>
+                  )}
+                </div>
+
+                <p className="text-[rgb(148,163,184)] text-xs sm:text-sm mb-6 break-words">
+                  {selectedPresentation.prompt}
+                </p>
+
+                <div className="space-y-5 scrollable-none">
+                  {selectedPresentation.slides &&
+                  selectedPresentation.slides.length > 0 ? (
+                    selectedPresentation.slides.map((slide, index) => (
+                      <div
+                        key={index}
+                        className="bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] rounded-xl p-4 sm:p-6 hover:border-[#06B6D4]/30 transition-all"
+                      >
+                        <div className="flex items-center gap-2 mb-4">
+                          <span className="text-[#67E8F9] font-bold">
+                            Slide {slide.slideNumber}:
+                          </span>
+
+                          <input
+                            value={slide.title}
+                            onChange={(e) =>
+                              updateSlideTitle(index, e.target.value)
+                            }
+                            className="flex-1 bg-transparent text-[#67E8F9] font-bold outline-none border-b border-transparent focus:border-cyan-400"
+                          />
+                        </div>
+
+                        <div
+                          className={`grid grid-cols-1 ${
+                            slide.imageUrl ? "md:grid-cols-2" : "grid-cols-1"
+                          } gap-6 items-center`}
+                        >
+                          <ul className="space-y-2">
+  {slide.content?.map((point, idx) => {
+    // Helper function to position the cursor at the end of the text
+    const placeCursorAtEnd = (e) => {
+      // Find the sibling editable span
+      const textSpan = e.currentTarget.previousElementSibling;
+      if (!textSpan) return;
+
+      textSpan.focus();
+
+      // Set text selection cursor range to the end of the content
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(textSpan);
+      range.collapse(false); // false = collapse to the END of the range
+
+      selection.removeAllRanges();
+      selection.addRange(range);
+    };
+
+    return (
+      <li
+        key={idx}
+        className="group flex  gap-3 text-[#CBD5E1] text-sm sm:text-base items-start"
+      >
+        {/* Bullet Dot */}
+        <span className="text-[#06B6D4] mt-1">•</span>
+
+        {/* Text Container */}
+        <div className=" flex justify-between items-center">
+          <span
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={(e) =>
+              updateBullet(
+                index,
+                idx,
+                e.currentTarget.innerText,
+              )
+            }
+            className="inline rounded px-1 py-0.5 outline-none transition-colors cursor-text group-hover:text-white focus:text-white focus:bg-[#1E293B] break-words whitespace-pre-wrap"
+          >
+            {point}
+          </span>
+
+          {/* Pencil Icon */}
+          <Pencil
+            size={14}
+            onClick={placeCursorAtEnd}
+            onMouseEnter={placeCursorAtEnd} // Triggers when hovering over pencil
+            className="inline-block ml-1.5 align-middle opacity-0 group-hover:opacity-100 text-slate-400 group-hover:text-white transition-all cursor-pointer"
+          />
         </div>
-      ))
-    ) : (
-      <p className="text-[#94A3B8]">No slides generated yet</p>
-    )}
-  </div>
-</div>
+      </li>
+    );
+  })}
+</ul>
+
+                          {slide.imageUrl && (
+                            <div className="w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-white/10 bg-[#0B1220] shadow-lg group relative">
+                              <img
+                                src={slide.imageUrl}
+                                alt={slide.imageKeyword || slide.title}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                loading="lazy"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-[#94A3B8]">No slides generated yet</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* RIGHT: CHAT */}
