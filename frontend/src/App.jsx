@@ -6,7 +6,7 @@ import { Login } from "./pages/Login";
 import { Chat } from "./pages/Chat";
 import { ProtectedRoute } from "./components/ProtectedRoute"; 
 import { Profile } from "./pages/Profile";
-
+import {Toaster} from 'react-hot-toast'
 export default function App() {
   return (
     <BrowserRouter>
@@ -27,6 +27,9 @@ export default function App() {
             </ProtectedRoute> }
           />
       </Routes>
+      <Toaster position="top-center" reverseOrder={false} />
+
     </BrowserRouter>
+
   );
 }

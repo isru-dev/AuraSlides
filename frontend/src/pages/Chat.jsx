@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, MoreVertical, Pencil, Trash2, Download } from "lucide-react";
+import { LogOut, MoreVertical, Pencil, Trash2, Download ,ImageIcon ,X ,Search} from "lucide-react";
+import { toast } from "react-hot-toast";
 
 export function Chat() {
   const [history, setHistory] = useState([]);
@@ -17,8 +18,74 @@ export function Chat() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [editingSlide, setEditingSlide] = useState(null);
+  const [editingField, setEditingField] = useState(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchingImages, setIsSearchingImages] = useState(false);
 
   const navigate = useNavigate();
+
+  const handleOpenImageModal = (slideIndex, currentKeyword, currentTitle) => {
+    setActiveSlideIndex(slideIndex);
+    const initialQuery = currentKeyword || currentTitle || "technology";
+    setSearchQuery(initialQuery);
+    setIsImageModalOpen(true);
+
+    // Fetch initial results immediately when opening
+    fetchBackendImages(initialQuery);
+  };
+
+  // 2. Fetch images from your BACKEND endpoint
+  const fetchBackendImages = async (query) => {
+    if (!query.trim()) return;
+    setIsSearchingImages(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/presentation/images/search?query=${encodeURIComponent(query)}`,
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        setSearchResults(data.results);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch images from server:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearchingImages(false);
+    }
+  };
+
+  // 3. Update Presentation Slide with the chosen image
+  const handleSelectImage = (newImageUrl) => {
+    if (activeSlideIndex === null) return;
+
+    setSelectedPresentation((prev) => {
+      if (!prev) return prev;
+
+      const updatedSlides = [...prev.slides];
+      updatedSlides[activeSlideIndex] = {
+        ...updatedSlides[activeSlideIndex],
+        imageUrl: newImageUrl,
+      };
+
+      return {
+        ...prev,
+        slides: updatedSlides,
+      };
+    });
+
+    setHasUnsavedChanges(true);
+    setIsImageModalOpen(false); // Close modal
+  };
+
   function handleSetting() {
     setShowSettings(false);
   }
@@ -26,112 +93,126 @@ export function Chat() {
     navigate("/profile");
   }
   const handleDocumentUpload = async () => {
-  if (!selectedFile) return;
+    if (!selectedFile) return;
 
-  const token = localStorage.getItem("userToken");
-
-  setIsGenerating(true);
-
-  try {
-    // Upload document to AI
-    const formData = new FormData();
-    formData.append("document", selectedFile);
-
-    const aiResponse = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/presentation/document`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      }
-    );
-
-    const aiData = await aiResponse.json();
-
-    if (!aiData.success) {
-      alert(aiData.message);
-      return;
-    }
-
-    const generatedSlides = aiData.result.slides;
-    const generatedTitle = aiData.result.title;
-
-    // Save presentation to MongoDB
-    const presentationResponse = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/presentation`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: generatedTitle,
-          prompt: selectedFile.name, // or "Uploaded Document"
-          slides: generatedSlides,
-          themeColor: "#06B6D4",
-        }),
-      }
-    );
-
-    const presentationData = await presentationResponse.json();
-
-    if (presentationData.success) {
-      setHistory((prev) => [
-        presentationData.presentation,
-        ...prev,
-      ]);
-
-      setSelectedPresentation(
-        presentationData.presentation
-      );
-
-      setSelectedFile(null);
-      setPromptInput("");
-    } else {
-      alert(presentationData.message);
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Failed to generate presentation.");
-  } finally {
-    setIsGenerating(false);
-  }
-};
- const handleSubmit = (e) => {
-  e.preventDefault();
-
-  if (selectedFile) {
-    handleDocumentUpload();
-  } else {
-    handlePromptSubmit(e);
-  }
-};
-  const handleExport = async () => {
     const token = localStorage.getItem("userToken");
 
+    setIsGenerating(true);
+
+    try {
+      // Upload document to AI
+      const formData = new FormData();
+      formData.append("document", selectedFile);
+
+      const aiResponse = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/presentation/document`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        },
+      );
+
+      const aiData = await aiResponse.json();
+
+      if (!aiData.success) {
+        alert(aiData.message);
+        return;
+      }
+
+      const generatedSlides = aiData.result.slides;
+      const generatedTitle = aiData.result.title;
+
+      // Save presentation to MongoDB
+      const presentationResponse = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/presentation`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: generatedTitle,
+            prompt: selectedFile.name, // or "Uploaded Document"
+            slides: generatedSlides,
+            themeColor: "#06B6D4",
+          }),
+        },
+      );
+
+      const presentationData = await presentationResponse.json();
+
+      if (presentationData.success) {
+        setHistory((prev) => [presentationData.presentation, ...prev]);
+
+        setSelectedPresentation(presentationData.presentation);
+
+        setSelectedFile(null);
+        setPromptInput("");
+      } else {
+        alert(presentationData.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate presentation.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (selectedFile) {
+      handleDocumentUpload();
+    } else {
+      handlePromptSubmit(e);
+    }
+  };
+  const handleExport = async () => {
+  const token = localStorage.getItem("userToken");
+
+  try {
+    // 1. Save latest changes to MongoDB FIRST so backend export route has new images!
+    if (hasUnsavedChanges) {
+      toast.info("Saving changes before exporting...");
+      await handleSavePresentation();
+    }
+
+    // 2. Fetch the exported PPTX file from backend
     const response = await fetch(
       `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}/export`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      },
+      }
     );
 
-    const blob = await response.blob();
+    if (!response.ok) {
+      throw new Error("Download failed");
+    }
 
+    const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
 
     const link = document.createElement("a");
     link.href = url;
     link.download = `${selectedPresentation.title}.pptx`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
 
     window.URL.revokeObjectURL(url);
-  };
+
+    toast.success("Presentation downloaded successfully!");
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to download presentation.");
+  }
+};
   function handleProfile() {
     navigate("/profile");
   }
@@ -368,6 +449,98 @@ export function Chat() {
       alert("Failed to rename presentation");
     }
   };
+  const updatePresentationTitle = (value) => {
+    setSelectedPresentation((prev) => ({
+      ...prev,
+      title: value,
+    }));
+
+    setHasUnsavedChanges(true);
+  };
+
+  const updateSlideTitle = (slideIndex, value) => {
+    setSelectedPresentation((prev) => ({
+      ...prev,
+      slides: prev.slides.map((slide, index) =>
+        index === slideIndex ? { ...slide, title: value } : slide,
+      ),
+    }));
+
+    setHasUnsavedChanges(true);
+  };
+
+  const updateBullet = (slideIndex, bulletIndex, value) => {
+    setSelectedPresentation((prev) => ({
+      ...prev,
+      slides: prev.slides.map((slide, index) =>
+        index === slideIndex
+          ? {
+              ...slide,
+              content: slide.content.map((bullet, i) =>
+                i === bulletIndex ? value : bullet,
+              ),
+            }
+          : slide,
+      ),
+    }));
+
+    setHasUnsavedChanges(true);
+  };
+  const handleSavePresentation = async () => {
+  if (!selectedPresentation?._id) return false;
+
+  const token = localStorage.getItem("userToken");
+  if (!token) {
+    toast.error("Authentication session expired. Please log in again.");
+    return false;
+  }
+
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: selectedPresentation.title,
+          prompt: selectedPresentation.prompt,
+          slides: selectedPresentation.slides, // Includes updated imageUrls
+          themeColor: selectedPresentation.themeColor,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Use updated document returned from DB or fallback to current state
+      const updatedPresentation = data.presentation || selectedPresentation;
+
+      setSelectedPresentation(updatedPresentation);
+      setHasUnsavedChanges(false);
+      toast.success("Successfully saved!");
+
+      // Update sidebar history state
+      setHistory((prev) =>
+        prev.map((p) =>
+          p._id === updatedPresentation._id ? updatedPresentation : p
+        )
+      );
+
+      return true; // Indicates success for callers like handleExport
+    } else {
+      toast.error(data.message || "Failed to save presentation.");
+      return false;
+    }
+  } catch (err) {
+    console.error("Save error:", err);
+    toast.error("An error occurred while saving.");
+    return false;
+  }
+};
 
   useEffect(() => {
     const token = localStorage.getItem("userToken");
@@ -417,7 +590,6 @@ export function Chat() {
       });
   }, []);
 
-  // Reusable component for rendering a single presentation item in the sidebar
   const PresentationItem = ({ presentation, onSelect, isMobile }) => (
     <div
       className={`group relative p-3 rounded-lg cursor-pointer transition-all 
@@ -546,7 +718,20 @@ export function Chat() {
       )}
     </div>
   );
+  const handleFocusAtEnd = (e) => {
+    const textElement = e.currentTarget.previousElementSibling;
+    if (!textElement) return;
 
+    textElement.focus();
+
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(textElement);
+    range.collapse(false); // Collapses cursor to the end
+
+    selection.removeAllRanges();
+    selection.addRange(range);
+  };
   return (
     <div className="min-h-screen bg-[#050816] text-[#F8FAFC] flex font-sans select-none overflow-hidden">
       {/* ============ DESKTOP SIDEBAR ============ */}
@@ -747,6 +932,7 @@ export function Chat() {
         <div className="absolute top-[-10%] left-[30%] w-[500px] h-[500px] bg-[#8B5CF6]/5 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-[-10%] right-[20%] w-[400px] h-[400px] bg-[#06B6D4]/5 rounded-full blur-[100px] pointer-events-none" />
 
+        {/* MOBILE HEADER */}
         <header className="w-full h-16 flex items-center justify-between md:hidden border-b border-[rgba(255,255,255,0.04)] px-2 z-10">
           <span className="bg-gradient-to-r from-[#67E8F9] via-[#A78BFA] to-[#C084FC] bg-clip-text text-transparent font-bold tracking-tight text-lg">
             AuraSlides
@@ -765,23 +951,56 @@ export function Chat() {
         {selectedPresentation && (
           <div className="w-full max-w-7xl z-10 flex flex-col lg:flex-row gap-6 h-auto lg:h-screen">
             {/* LEFT: PRESENTATION */}
-            <div className="w-full lg:flex-[1.8] overflow-y-auto scrollable-none justify-end">
-              <div className=" flex items-center gap-2 px-4 py-3 text-[#67E8F9] justify-end ">
-                <button
-                  onClick={handleExport}
-                  className="cursor-pointer flex items-center gap-2 hover:text-white transition-colors"
-                >
-                  <Download size={18} /> Download
-                </button>
-              </div>
+            <div className="w-full lg:flex-[1.8] overflow-y-auto scrollable-none">
+              {/* PRESENTATION CONTAINER CARD */}
               <div className="bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl p-4 sm:p-6 lg:p-8">
-                <h1 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] mb-2 break-words">
-                  {selectedPresentation.title}
-                </h1>
-                <p className="text-[#94A3B8] text-xs sm:text-sm mb-6 break-words">
+                {/* Top Actions Bar */}
+                <div className="flex items-center justify-end gap-2 text-[#67E8F9] mb-4">
+                  <button
+                    onClick={handleExport}
+                    className="cursor-pointer flex items-center gap-2 hover:text-white transition-colors text-sm font-medium"
+                  >
+                    <Download size={18} /> Download
+                  </button>
+                </div>
+
+                {/* PRESENTATION TITLE */}
+                <div className="flex items-center justify-between gap-4 mb-2">
+                  <div className="group flex-1 flex items-center gap-2">
+                    <span
+                      contentEditable
+                      suppressContentEditableWarning
+                      onBlur={(e) =>
+                        updatePresentationTitle(e.currentTarget.innerText)
+                      }
+                      className="inline-block bg-transparent text-3xl font-bold text-slate-200 transition-colors cursor-text group-hover:text-white focus:text-white focus:bg-[#1E293B] rounded px-2 py-0.5 outline-none break-words"
+                    >
+                      {selectedPresentation.title}
+                    </span>
+
+                    <Pencil
+                      size={20}
+                      onClick={handleFocusAtEnd}
+                      onMouseEnter={handleFocusAtEnd}
+                      className="opacity-0 group-hover:opacity-100 text-slate-400 group-hover:text-white transition-all cursor-pointer shrink-0"
+                    />
+                  </div>
+
+                  {hasUnsavedChanges && (
+                    <button
+                      onClick={handleSavePresentation}
+                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white text-sm font-medium hover:opacity-90 transition cursor-pointer shrink-0"
+                    >
+                      Save Changes
+                    </button>
+                  )}
+                </div>
+
+                <p className="text-[rgb(148,163,184)] text-xs sm:text-sm mb-6 break-words">
                   {selectedPresentation.prompt}
                 </p>
 
+                {/* SLIDES LIST */}
                 <div className="space-y-5 scrollable-none">
                   {selectedPresentation.slides &&
                   selectedPresentation.slides.length > 0 ? (
@@ -790,29 +1009,81 @@ export function Chat() {
                         key={index}
                         className="bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] rounded-xl p-4 sm:p-6 hover:border-[#06B6D4]/30 transition-all"
                       >
-                        <h2 className="text-lg sm:text-xl font-bold text-[#67E8F9] mb-4">
-                          Slide {slide.slideNumber}: {slide.title}
-                        </h2>
+                        {/* SLIDE TITLE */}
+                        <div className="group flex items-center  gap-2 mb-4">
+                          <span className="text-[#67E8F9] font-bold shrink-0">
+                            Slide {slide.slideNumber}:
+                          </span>
+                          <div className="group flex items-center justify-between gap-2">
+                            <span
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e) =>
+                                updateSlideTitle(
+                                  index,
+                                  e.currentTarget.innerText,
+                                )
+                              }
+                              className=" bg-transparent text-[#67E8F9] font-bold transition-colors cursor-text group-hover:text-white focus:text-white focus:bg-[#1E293B] rounded px-1.5 py-0.5 outline-none break-words"
+                            >
+                              {slide.title}
+                            </span>
 
-                        {/* 🖼️ DYNAMIC GRID: Left Bullets, Right Image Preview */}
+                            <Pencil
+                              size={20}
+                              onClick={handleFocusAtEnd}
+                              onMouseEnter={handleFocusAtEnd}
+                              className="opacity-0 group-hover:opacity-100 text-slate-400 group-hover:text-white transition-all cursor-pointer shrink-0"
+                            />
+                          </div>
+                        </div>
+
+                        {/* SLIDE CONTENT & IMAGE */}
                         <div
-                          className={`grid grid-cols-1 ${slide.imageUrl ? "md:grid-cols-2" : "grid-cols-1"} gap-6 items-center`}
+                          className={`grid grid-cols-1 ${
+                            slide.imageUrl ? "md:grid-cols-2" : "grid-cols-1"
+                          } gap-6 items-center`}
                         >
-                          {/* Bullet Points Column */}
+                          {/* Bullet Points */}
                           <ul className="space-y-2">
                             {slide.content?.map((point, idx) => (
                               <li
                                 key={idx}
-                                className="flex gap-3 text-[#CBD5E1] text-sm sm:text-base"
+                                className="group flex gap-3 text-[#CBD5E1] text-sm sm:text-base items-start"
                               >
-                                <span className="text-[#06B6D4] mt-1">•</span>
-                                <span className="break-words">{point}</span>
+                                <span className="text-[#06B6D4] mt-1 shrink-0">
+                                  •
+                                </span>
+
+                                <div className="flex justify-between items-center">
+                                  <span
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    onBlur={(e) =>
+                                      updateBullet(
+                                        index,
+                                        idx,
+                                        e.currentTarget.innerText,
+                                      )
+                                    }
+                                    className="inline rounded px-1 py-0.5 outline-none transition-colors cursor-text group-hover:text-white focus:text-white focus:bg-[#1E293B] break-words whitespace-pre-wrap"
+                                  >
+                                    {point}
+                                  </span>
+
+                                  <Pencil
+                                    size={27}
+                                    onClick={handleFocusAtEnd}
+                                    onMouseEnter={handleFocusAtEnd}
+                                    className=" ml-1.5 align-middle opacity-0 group-hover:opacity-100 text-slate-400 group-hover:text-white transition-all cursor-pointer"
+                                  />
+                                </div>
                               </li>
                             ))}
                           </ul>
 
-                          {/* Image Preview Column (Renders if slide.imageUrl exists) */}
-                          {slide.imageUrl && (
+                          {/* Slide Image Container */}
+                          {slide.imageUrl ? (
                             <div className="w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-white/10 bg-[#0B1220] shadow-lg group relative">
                               <img
                                 src={slide.imageUrl}
@@ -820,7 +1091,39 @@ export function Chat() {
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 loading="lazy"
                               />
+
+                              {/* Hover Action Overlay */}
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-3">
+                                <button
+                                  onClick={() =>
+                                    handleOpenImageModal(
+                                      index,
+                                      slide.imageKeyword,
+                                      slide.title,
+                                    )
+                                  }
+                                  className="px-3.5 py-2 rounded-lg bg-[#06B6D4] text-white text-xs font-semibold hover:bg-[#0891B2] transition flex items-center gap-2 cursor-pointer shadow-lg"
+                                >
+                                  <ImageIcon size={16} /> Change Image
+                                </button>
+                              </div>
                             </div>
+                          ) : (
+                            <button
+                              onClick={() =>
+                                handleOpenImageModal(
+                                  index,
+                                  slide.imageKeyword,
+                                  slide.title,
+                                )
+                              }
+                              className="w-full h-48 sm:h-56 rounded-xl border border-dashed border-white/20 bg-[#0B1220]/40 flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-white hover:border-[#06B6D4] transition cursor-pointer"
+                            >
+                              <ImageIcon size={24} />
+                              <span className="text-xs font-medium">
+                                Add Slide Image
+                              </span>
+                            </button>
                           )}
                         </div>
                       </div>
@@ -943,16 +1246,14 @@ export function Chat() {
         {!selectedPresentation && (
           <div className="w-full max-w-2xl pb-8 sm:pb-12 z-10 mt-[40px]">
             <form
-              onSubmit={handleSubmit} // Change from handlePromptSubmit
+              onSubmit={handleSubmit}
               className="w-full bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-2xl rounded-2xl p-2.5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] flex flex-col gap-2.5 focus-within:border-[#06B6D4]/40 focus-within:ring-1 focus-within:ring-[#06B6D4]/10 transition-all duration-300"
             >
-              {/* Prompt */}
+              {/* Prompt Input */}
               <textarea
                 value={promptInput}
                 onChange={(e) => {
                   setPromptInput(e.target.value);
-
-                  // Optional: clear uploaded file if user starts typing
                   if (selectedFile) setSelectedFile(null);
                 }}
                 rows={3}
@@ -993,8 +1294,6 @@ export function Chat() {
                   className="hidden"
                   onChange={(e) => {
                     setSelectedFile(e.target.files[0]);
-
-                    // Optional: clear prompt if uploading a document
                     setPromptInput("");
                   }}
                 />
@@ -1033,6 +1332,92 @@ export function Chat() {
             <div className="text-center text-[10px] text-[#94A3B8]/40 mt-3 tracking-wide">
               AuraSlides uses deep learning layers. Review generated files for
               precise structural metrics.
+            </div>
+          </div>
+        )}
+        {/* IMAGE SEARCH MODAL */}
+        {isImageModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+            <div className="w-full max-w-2xl bg-[#0B1220] border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col gap-5">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <ImageIcon className="text-[#06B6D4]" size={20} /> Change
+                  Slide Image
+                </h3>
+                <button
+                  onClick={() => setIsImageModalOpen(false)}
+                  className="text-slate-400 hover:text-white p-1 rounded-lg transition cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Search Input Form */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  fetchBackendImages(searchQuery);
+                }}
+                className="flex gap-2"
+              >
+                <div className="relative flex-1">
+                  <Search
+                    size={18}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search keywords..."
+                    className="w-full bg-[#111827] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#06B6D4]"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white text-sm font-medium hover:opacity-90 transition cursor-pointer shrink-0"
+                >
+                  Search
+                </button>
+              </form>
+
+              {/* Search Results Display */}
+              <div className="min-h-[260px] max-h-[360px] overflow-y-auto">
+                {isSearchingImages ? (
+                  <div className="flex flex-col items-center justify-center h-48 gap-3 text-slate-400">
+                    <div className="w-6 h-6 border-2 border-[#06B6D4] border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs">
+                      Fetching images from server...
+                    </span>
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {searchResults.map((img) => (
+                      <div
+                        key={img.id}
+                        onClick={() => handleSelectImage(img.full)}
+                        className="group relative h-28 rounded-xl overflow-hidden border border-white/10 cursor-pointer hover:border-[#06B6D4] transition-all"
+                      >
+                        <img
+                          src={img.thumb}
+                          alt={img.alt}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-[#06B6D4]/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="text-[10px] uppercase tracking-wider font-bold text-white bg-black/70 px-2 py-1 rounded">
+                            Select
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-48 text-slate-500 text-sm">
+                    No images found. Try another search term.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
