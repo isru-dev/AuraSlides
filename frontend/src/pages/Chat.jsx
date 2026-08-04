@@ -618,7 +618,20 @@ export function Chat() {
       )}
     </div>
   );
+  const handleFocusAtEnd = (e) => {
+    const textElement = e.currentTarget.previousElementSibling;
+    if (!textElement) return;
 
+    textElement.focus();
+
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(textElement);
+    range.collapse(false); // Collapses cursor to the end
+
+    selection.removeAllRanges();
+    selection.addRange(range);
+  };
   return (
     <div className="min-h-screen bg-[#050816] text-[#F8FAFC] flex font-sans select-none overflow-hidden">
       {/* ============ DESKTOP SIDEBAR ============ */}
@@ -819,6 +832,7 @@ export function Chat() {
         <div className="absolute top-[-10%] left-[30%] w-[500px] h-[500px] bg-[#8B5CF6]/5 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-[-10%] right-[20%] w-[400px] h-[400px] bg-[#06B6D4]/5 rounded-full blur-[100px] pointer-events-none" />
 
+        {/* MOBILE HEADER */}
         <header className="w-full h-16 flex items-center justify-between md:hidden border-b border-[rgba(255,255,255,0.04)] px-2 z-10">
           <span className="bg-gradient-to-r from-[#67E8F9] via-[#A78BFA] to-[#C084FC] bg-clip-text text-transparent font-bold tracking-tight text-lg">
             AuraSlides
@@ -837,28 +851,45 @@ export function Chat() {
         {selectedPresentation && (
           <div className="w-full max-w-7xl z-10 flex flex-col lg:flex-row gap-6 h-auto lg:h-screen">
             {/* LEFT: PRESENTATION */}
-            <div className="w-full lg:flex-[1.8] overflow-y-auto scrollable-none justify-end">
-              <div className=" flex items-center gap-2 px-4 py-3 text-[#67E8F9] justify-end ">
-                <button
-                  onClick={handleExport}
-                  className="cursor-pointer flex items-center gap-2 hover:text-white transition-colors"
-                >
-                  <Download size={18} /> Download
-                </button>
-              </div>
+            <div className="w-full lg:flex-[1.8] overflow-y-auto scrollable-none">
+              {/* PRESENTATION CONTAINER CARD */}
               <div className="bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-xl rounded-2xl p-4 sm:p-6 lg:p-8">
-                {/* Presentation Title + Save Button */}
+                {/* Top Actions Bar */}
+                <div className="flex items-center justify-end gap-2 text-[#67E8F9] mb-4">
+                  <button
+                    onClick={handleExport}
+                    className="cursor-pointer flex items-center gap-2 hover:text-white transition-colors text-sm font-medium"
+                  >
+                    <Download size={18} /> Download
+                  </button>
+                </div>
+
+                {/* PRESENTATION TITLE */}
                 <div className="flex items-center justify-between gap-4 mb-2">
-                  <input
-                    value={selectedPresentation.title}
-                    onChange={(e) => updatePresentationTitle(e.target.value)}
-                    className="flex-1 bg-transparent text-3xl font-bold text-white border-none outline-none focus:border-b focus:border-cyan-400"
-                  />
+                  <div className="group flex-1 flex items-center gap-2">
+                    <span
+                      contentEditable
+                      suppressContentEditableWarning
+                      onBlur={(e) =>
+                        updatePresentationTitle(e.currentTarget.innerText)
+                      }
+                      className="inline-block bg-transparent text-3xl font-bold text-slate-200 transition-colors cursor-text group-hover:text-white focus:text-white focus:bg-[#1E293B] rounded px-2 py-0.5 outline-none break-words"
+                    >
+                      {selectedPresentation.title}
+                    </span>
+
+                    <Pencil
+                      size={20}
+                      onClick={handleFocusAtEnd}
+                      onMouseEnter={handleFocusAtEnd}
+                      className="opacity-0 group-hover:opacity-100 text-slate-400 group-hover:text-white transition-all cursor-pointer shrink-0"
+                    />
+                  </div>
 
                   {hasUnsavedChanges && (
                     <button
                       onClick={handleSavePresentation}
-                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white text-sm font-medium hover:opacity-90 transition cursor-pointer"
+                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white text-sm font-medium hover:opacity-90 transition cursor-pointer shrink-0"
                     >
                       Save Changes
                     </button>
@@ -869,6 +900,7 @@ export function Chat() {
                   {selectedPresentation.prompt}
                 </p>
 
+                {/* SLIDES LIST */}
                 <div className="space-y-5 scrollable-none">
                   {selectedPresentation.slides &&
                   selectedPresentation.slides.length > 0 ? (
@@ -877,83 +909,77 @@ export function Chat() {
                         key={index}
                         className="bg-[#111827]/60 border border-[rgba(255,255,255,0.06)] rounded-xl p-4 sm:p-6 hover:border-[#06B6D4]/30 transition-all"
                       >
-                        <div className="flex items-center gap-2 mb-4">
-                          <span className="text-[#67E8F9] font-bold">
+                        {/* SLIDE TITLE */}
+                        <div className="group flex items-center  gap-2 mb-4">
+                          <span className="text-[#67E8F9] font-bold shrink-0">
                             Slide {slide.slideNumber}:
                           </span>
-
-                          <input
-                            value={slide.title}
-                            onChange={(e) =>
-                              updateSlideTitle(index, e.target.value)
+                       <div className="group flex items-center justify-between gap-2">
+                          <span
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) =>
+                              updateSlideTitle(index, e.currentTarget.innerText)
                             }
-                            className="flex-1 bg-transparent text-[#67E8F9] font-bold outline-none border-b border-transparent focus:border-cyan-400"
-                          />
-                        </div>
+                            className=" bg-transparent text-[#67E8F9] font-bold transition-colors cursor-text group-hover:text-white focus:text-white focus:bg-[#1E293B] rounded px-1.5 py-0.5 outline-none break-words"
+                          >
+                            {slide.title}
+                          </span>
 
+                          <Pencil
+                            size={20}
+                            onClick={handleFocusAtEnd}
+                            onMouseEnter={handleFocusAtEnd}
+                            className="opacity-0 group-hover:opacity-100 text-slate-400 group-hover:text-white transition-all cursor-pointer shrink-0"
+                          />
+                          </div>
+             </div>
+
+                        {/* SLIDE CONTENT & IMAGE */}
                         <div
                           className={`grid grid-cols-1 ${
                             slide.imageUrl ? "md:grid-cols-2" : "grid-cols-1"
                           } gap-6 items-center`}
                         >
+                          {/* Bullet Points */}
                           <ul className="space-y-2">
-  {slide.content?.map((point, idx) => {
-    // Helper function to position the cursor at the end of the text
-    const placeCursorAtEnd = (e) => {
-      // Find the sibling editable span
-      const textSpan = e.currentTarget.previousElementSibling;
-      if (!textSpan) return;
+                            {slide.content?.map((point, idx) => (
+                              <li
+                                key={idx}
+                                className="group flex gap-3 text-[#CBD5E1] text-sm sm:text-base items-start"
+                              >
+                                <span className="text-[#06B6D4] mt-1 shrink-0">
+                                  •
+                                </span>
 
-      textSpan.focus();
+                                <div className="flex justify-between items-center">
+                                  <span
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    onBlur={(e) =>
+                                      updateBullet(
+                                        index,
+                                        idx,
+                                        e.currentTarget.innerText,
+                                      )
+                                    }
+                                    className="inline rounded px-1 py-0.5 outline-none transition-colors cursor-text group-hover:text-white focus:text-white focus:bg-[#1E293B] break-words whitespace-pre-wrap"
+                                  >
+                                    {point}
+                                  </span>
 
-      // Set text selection cursor range to the end of the content
-      const selection = window.getSelection();
-      const range = document.createRange();
-      range.selectNodeContents(textSpan);
-      range.collapse(false); // false = collapse to the END of the range
+                                  <Pencil
+                                    size={27}
+                                    onClick={handleFocusAtEnd}
+                                    onMouseEnter={handleFocusAtEnd}
+                                    className=" ml-1.5 align-middle opacity-0 group-hover:opacity-100 text-slate-400 group-hover:text-white transition-all cursor-pointer"
+                                  />
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
 
-      selection.removeAllRanges();
-      selection.addRange(range);
-    };
-
-    return (
-      <li
-        key={idx}
-        className="group flex  gap-3 text-[#CBD5E1] text-sm sm:text-base items-start"
-      >
-        {/* Bullet Dot */}
-        <span className="text-[#06B6D4] mt-1">•</span>
-
-        {/* Text Container */}
-        <div className=" flex justify-between items-center">
-          <span
-            contentEditable
-            suppressContentEditableWarning
-            onBlur={(e) =>
-              updateBullet(
-                index,
-                idx,
-                e.currentTarget.innerText,
-              )
-            }
-            className="inline rounded px-1 py-0.5 outline-none transition-colors cursor-text group-hover:text-white focus:text-white focus:bg-[#1E293B] break-words whitespace-pre-wrap"
-          >
-            {point}
-          </span>
-
-          {/* Pencil Icon */}
-          <Pencil
-            size={14}
-            onClick={placeCursorAtEnd}
-            onMouseEnter={placeCursorAtEnd} // Triggers when hovering over pencil
-            className="inline-block ml-1.5 align-middle opacity-0 group-hover:opacity-100 text-slate-400 group-hover:text-white transition-all cursor-pointer"
-          />
-        </div>
-      </li>
-    );
-  })}
-</ul>
-
+                          {/* Image Preview */}
                           {slide.imageUrl && (
                             <div className="w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-white/10 bg-[#0B1220] shadow-lg group relative">
                               <img
@@ -1085,16 +1111,14 @@ export function Chat() {
         {!selectedPresentation && (
           <div className="w-full max-w-2xl pb-8 sm:pb-12 z-10 mt-[40px]">
             <form
-              onSubmit={handleSubmit} // Change from handlePromptSubmit
+              onSubmit={handleSubmit}
               className="w-full bg-[#0B1220]/60 border border-[rgba(255,255,255,0.06)] backdrop-blur-2xl rounded-2xl p-2.5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] flex flex-col gap-2.5 focus-within:border-[#06B6D4]/40 focus-within:ring-1 focus-within:ring-[#06B6D4]/10 transition-all duration-300"
             >
-              {/* Prompt */}
+              {/* Prompt Input */}
               <textarea
                 value={promptInput}
                 onChange={(e) => {
                   setPromptInput(e.target.value);
-
-                  // Optional: clear uploaded file if user starts typing
                   if (selectedFile) setSelectedFile(null);
                 }}
                 rows={3}
@@ -1135,8 +1159,6 @@ export function Chat() {
                   className="hidden"
                   onChange={(e) => {
                     setSelectedFile(e.target.files[0]);
-
-                    // Optional: clear prompt if uploading a document
                     setPromptInput("");
                   }}
                 />
