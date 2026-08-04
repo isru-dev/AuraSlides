@@ -784,6 +784,9 @@ export function Chat() {
             <span className="text-[10px] bg-[#67E8F9]/10 text-[#67E8F9] font-medium px-1.5 py-0.5 rounded-md uppercase tracking-wider">
               v1.5
             </span>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#67E8F9]/10 text-[#67E8F9] border border-[#67E8F9]/30 uppercase tracking-widest shadow-[0_0_12px_rgba(103,232,249,0.2)]">
+            Beta
+          </span>
           </div>
 
           <button
