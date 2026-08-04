@@ -20,14 +20,12 @@ duration-300 h-[250px] flex items-center flex-col justify-center p-3"
 font-semibold
 text-2xl text-cyan-400"
           >
-            AI-Driven Layout Mapping
-          </h1>
+AI Presentation Generation          </h1>
           <p
             className="text-slate-300
 leading-relaxed py-7 px-14"
           >
-            Processes open-ended text via intelligent data pipelines to build
-            cohesive slide narrative structures instantly.
+            Turn any prompt or rough topic into a complete, context-aware slide deck in seconds
           </p>
         </div>
         <div
@@ -43,14 +41,13 @@ duration-300 flex items-center flex-col justify-center p-3"
             className="font-semibold
 text-2xl text-cyan-400"
           >
-            Flexible Layout Switcher
+           Built-In Image Search & Swaps
           </h1>
           <p
             className="text-slate-300
 leading-relaxed py-7"
           >
-            Instantly remodel individual slides from horizontal data grids into
-            centered hero layouts at the click of a single toggle.
+            Easily search, swap, or delete slide images with custom keywords directly inside the editor so every slide fits your vibe.
           </p>
         </div>
         <div
@@ -66,14 +63,13 @@ duration-300 h-[250px]   flex items-center flex-col justify-center p-3"
             className="font-semibold
 text-2xl text-cyan-400"
           >
-            Premium Minimalist Aesthetic
+           Auto-Sync & PPTX Export
           </h1>
           <p
             className="text-slate-300
 leading-relaxed py-7"
           >
-            Built with a fluid, dark-mode workspace layout that features
-            high-end typography and crisp component transitions out of the box.
+           Your changes save automatically to your workspace, and you can export your deck as an editable .pptx file anytime with a single click.
           </p>
         </div>
       </div>

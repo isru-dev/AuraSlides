@@ -37,6 +37,7 @@ export function Chat() {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchingImages, setIsSearchingImages] = useState(false);
   const [isDownloading, setisDownloading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
 
   const handleRemoveImage = (slideIndex) => {
@@ -245,7 +246,6 @@ export function Chat() {
 
       toast.success("Presentation downloaded successfully!");
       setisDownloading(false);
-
     } catch (error) {
       console.error(error);
       toast.error("Failed to download presentation.");
@@ -532,7 +532,7 @@ export function Chat() {
       toast.error("Authentication session expired. Please log in again.");
       return false;
     }
-
+    setIsSaving(true);
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/presentation/${selectedPresentation._id}`,
@@ -577,6 +577,8 @@ export function Chat() {
       console.error("Save error:", err);
       toast.error("An error occurred while saving.");
       return false;
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1120,20 +1122,48 @@ export function Chat() {
                             ))}
                           </ul>
 
-                          {/* Slide Image Preview Container */}
+                          {/* Slide Image Container */}
                           {slide.imageUrl ? (
-                            <div className="w-full h-48 sm:h-56 rounded-xl overflow-hidden border border-white/10 bg-[#0B1220] shadow-lg group relative">
-                              <img
-                                src={slide.imageUrl}
-                                alt={slide.imageKeyword || slide.title}
-                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                loading="lazy"
-                              />
+                            <div className="w-full rounded-xl overflow-hidden border border-white/10 bg-[#0B1220] shadow-lg group flex flex-col">
+                              {/* Image Container with Desktop Hover Overlay */}
+                              <div className="relative h-48 sm:h-56 w-full">
+                                <img
+                                  src={slide.imageUrl}
+                                  alt={slide.imageKeyword || slide.title}
+                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                  loading="lazy"
+                                />
 
-                              {/* Hover Action Overlay */}
-                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-3">
-                                {/* Change Image Button */}
+                                {/* 🖥️ DESKTOP ONLY: Hover Action Overlay (Hidden on Mobile) */}
+                                <div className="hidden sm:flex absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center gap-2 p-3">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleOpenImageModal(
+                                        index,
+                                        slide.imageKeyword,
+                                        slide.title,
+                                      )
+                                    }
+                                    className="px-3.5 py-2 rounded-lg bg-[#06B6D4] text-white text-xs font-semibold hover:bg-[#0891B2] transition flex items-center gap-1.5 cursor-pointer shadow-lg"
+                                  >
+                                    <ImageIcon size={15} /> Change
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveImage(index)}
+                                    className="px-3.5 py-2 rounded-lg bg-red-500/80 hover:bg-red-600 text-white text-xs font-semibold backdrop-blur-md transition flex items-center gap-1.5 cursor-pointer shadow-lg"
+                                  >
+                                    <Trash2 size={15} /> Delete
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* 📱 MOBILE ONLY: Always-Visible Action Bar (Hidden on Desktop) */}
+                              <div className="flex sm:hidden items-center justify-between p-2.5 bg-[#111827] border-t border-white/10 gap-2">
                                 <button
+                                  type="button"
                                   onClick={() =>
                                     handleOpenImageModal(
                                       index,
@@ -1141,23 +1171,24 @@ export function Chat() {
                                       slide.title,
                                     )
                                   }
-                                  className="px-3.5 py-2 rounded-lg bg-[#06B6D4] text-white text-xs font-semibold hover:bg-[#0891B2] transition flex items-center gap-1.5 cursor-pointer shadow-lg"
+                                  className="flex-1 px-3 py-2 rounded-lg bg-[#06B6D4] text-white text-xs font-semibold active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer shadow"
                                 >
-                                  <ImageIcon size={15} /> Change
+                                  <ImageIcon size={14} /> Change
                                 </button>
 
-                                {/* Delete Image Button */}
                                 <button
+                                  type="button"
                                   onClick={() => handleRemoveImage(index)}
-                                  className="px-3.5 py-2 rounded-lg bg-red-500/80 hover:bg-red-600 text-white text-xs font-semibold backdrop-blur-md transition flex items-center gap-1.5 cursor-pointer shadow-lg"
+                                  className="px-3 py-2 rounded-lg bg-red-500/20 text-red-400 active:scale-95 transition flex items-center justify-center gap-1.5 text-xs font-semibold border border-red-500/30 cursor-pointer"
                                 >
-                                  <Trash2 size={15} /> Delete
+                                  <Trash2 size={14} /> Remove
                                 </button>
                               </div>
                             </div>
                           ) : (
-                            /* Empty State Placeholder if Slide Has No Image */
+                            /* Empty Placeholder when Slide has no image */
                             <button
+                              type="button"
                               onClick={() =>
                                 handleOpenImageModal(
                                   index,
@@ -1301,6 +1332,20 @@ export function Chat() {
               </h1>
               <p className="text-xs text-slate-400">
                 Generating your file, please wait.
+              </p>
+            </div>
+          </div>
+        )}
+        {/* Saving Overlay */}
+        {isSaving && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="flex flex-col items-center justify-center gap-3 bg-[#0B1220] border border-white/10 p-6 rounded-2xl shadow-2xl">
+              <div className="w-8 h-8 border-3 border-[#06B6D4] border-t-transparent rounded-full animate-spin" />
+              <h1 className="text-white text-base font-semibold tracking-wide">
+                Saving presentation...
+              </h1>
+              <p className="text-xs text-slate-400">
+                Updating your changes, please wait.
               </p>
             </div>
           </div>

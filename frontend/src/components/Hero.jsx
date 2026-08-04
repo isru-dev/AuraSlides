@@ -1,4 +1,7 @@
+import { useNavigate } from "react-router-dom";
 export function Hero() {
+  const navigate = useNavigate();
+
   return (
     <section className="min-h-[85vh] flex items-center bg-gradient-to-br from-[#050816] via-[#0B1220] to-[#111827] ">
       <div className="max-w-8xl mx-auto px-6">
@@ -6,12 +9,10 @@ export function Hero() {
           From Raw Prompts to Premium Slide Instantly.
         </h1>
         <p className="text-slate-300 text-lg sm:text-xl text-slate-400 mt-4 max-w-2xl">
-          Stop fighting PowerPoint templates. AuraSlides turns open-ended user
-          requests into context-aware slides, perfectly mapped to stunning
-          structural layouts in seconds.
+          No more spending hours tweaking PowerPoint layouts. AuraSlides takes your raw ideas and turns them into clean, perfectly designed slides in a flash.
         </p>
         <div className=" flex flex-wrap gap-4 mt-8">
-          <button
+          <button  onClick={() => navigate("/register")}
             className="bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6]
 hover:from-[#22D3EE]
 hover:to-[#A78BFA]
