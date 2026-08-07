@@ -109,7 +109,6 @@ export function Login() {
           </h3>
         </div>
 
-        {/* 3. Attached the click hook handler to your custom styled button */}
         <button 
           type="button"
           onClick={() => loginWithGoogle()}
@@ -136,7 +135,7 @@ export function Login() {
           <span>Continue with Google</span>
         </button>
 
-        <div className="flex items-center my-1">
+      <div className="flex items-center my-1">
           <div className="flex-1 border-t border-[rgba(255,255,255,0.06)]"></div>
           <span className="px-3 text-[10px] text-[#94A3B8]/60 font-semibold tracking-widest">
             OR

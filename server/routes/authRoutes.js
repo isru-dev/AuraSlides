@@ -6,12 +6,7 @@ const jwt = require("jsonwebtoken");
 const protect = require("../middleware/authMiddleware.js");
 
 
-router.get("/reg", (req, res) => {
-  res.send("yes sir");
-});
-router.get("/", (req, res) => {
-  res.send("hello from /");
-});
+
 router.post("/register", async (req, res) => {
   try {
     const {name, email, password, confirmPassword } = req.body;
