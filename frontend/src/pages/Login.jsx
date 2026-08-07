@@ -135,56 +135,7 @@ export function Login() {
           <span>Continue with Google</span>
         </button>
 
-      <div className="flex items-center my-1">
-          <div className="flex-1 border-t border-[rgba(255,255,255,0.06)]"></div>
-          <span className="px-3 text-[10px] text-[#94A3B8]/60 font-semibold tracking-widest">
-            OR
-          </span>
-          <div className="flex-1 border-t border-[rgba(255,255,255,0.06)]"></div>
-        </div>
-
-        <form method="post" className="flex flex-col gap-4.5" onSubmit={handleLogin}>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[#94A3B8] text-xs font-medium uppercase tracking-wider">
-              Email Address
-            </label>
-            <input
-              type="email"
-              required
-              placeholder="name@domain.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-[#111827]/80 border border-[rgba(255,255,255,0.06)] text-[#F8FAFC] placeholder-[#94A3B8]/40 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-[#06B6D4]/60 focus:ring-1 focus:ring-[#06B6D4]/30 transition-all duration-200"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <div className="flex justify-between items-center">
-              <label className="text-[#94A3B8] text-xs font-medium uppercase tracking-wider">
-                Password
-              </label>
-              <a href="/forgot-password" className="text-xs text-[#06B6D4] hover:text-[#8B5CF6] transition-colors">
-                Forgot password?
-              </a>
-            </div>
-            <input
-              type="password"
-              required
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="bg-[#111827]/80 border border-[rgba(255,255,255,0.06)] text-[#F8FAFC] placeholder-[#94A3B8]/40 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-[#06B6D4]/60 focus:ring-1 focus:ring-[#06B6D4]/30 transition-all duration-200"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full mt-2 bg-gradient-to-r from-[#06B6D4] to-[#8B5CF6] text-white font-medium py-3 rounded-xl shadow-[0_4px_25px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_35px_rgba(139,92,246,0.3)] hover:scale-[1.01] transition-all duration-300 cursor-pointer text-sm"
-          >
-            Sign In
-          </button>
-        </form>
-
+      
         <div className="text-center text-xs text-[#94A3B8] mt-2">
           Don't have an account?{" "}
           <a href="/register" className="text-[#06B6D4] font-medium hover:text-[#8B5CF6] transition-colors ml-1">
