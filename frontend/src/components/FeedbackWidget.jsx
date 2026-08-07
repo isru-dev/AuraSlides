@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { MessageSquarePlus, X, Send, CheckCircle2, Bug, Lightbulb, Heart } from "lucide-react";
+import {
+  MessageSquarePlus,
+  X,
+  Send,
+  CheckCircle2,
+  Bug,
+  Lightbulb,
+  Heart,
+} from "lucide-react";
 
 export function FeedbackWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,60 +17,53 @@ export function FeedbackWidget() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  // ⚠️ Place your Bot Token & Chat ID here (or in your .env file)
-  const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-  const TELEGRAM_CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID;
-
+  
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!message.trim()) return;
+  e.preventDefault();
 
-    setIsSubmitting(true);
+  if (!message.trim()) return;
 
-    // Format the message with clean Telegram Markdown formatting
-    const categoryEmoji = category === "bug" ? "🐛 Bug" : category === "feature" ? "💡 Idea" : "❤️ General";
-    
-    const telegramText = `
-🚀 *New Feedback on AuraSlides!*
+  setIsSubmitting(true);
 
-*Type:* ${categoryEmoji}
-*Message:*
-${message}
+  try {
+    const token = localStorage.getItem("userToken");
 
-*User Email:* ${email || "Not provided"}
-    `.trim();
-
-    try {
-      const response = await fetch(
-        `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: TELEGRAM_CHAT_ID,
-            text: telegramText,
-            parse_mode: "Markdown",
-          }),
-        }
-      );
-
-      if (response.ok) {
-        setSubmitted(true);
-        setTimeout(() => {
-          setSubmitted(false);
-          setIsOpen(false);
-          setMessage("");
-          setEmail("");
-        }, 2000);
-      } else {
-        console.error("Telegram API Error");
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/feedback`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          message,
+          email,
+          category,
+        }),
       }
-    } catch (error) {
-      console.error("Feedback submission error:", error);
-    } finally {
-      setIsSubmitting(false);
+    );
+
+    const response = await res.json();
+
+    if (response.success) {
+      setSubmitted(true);
+
+      setTimeout(() => {
+        setSubmitted(false);
+        setIsOpen(false);
+        setMessage("");
+        setEmail("");
+      }, 2000);
+    } else {
+      console.error(response.message);
     }
-  };
+  } catch (error) {
+    console.error("Feedback submission error:", error);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <>
@@ -79,7 +80,6 @@ ${message}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-[#0B1220] border border-white/10 w-full max-w-md rounded-3xl p-6 shadow-2xl relative text-white">
-            
             <button
               onClick={() => setIsOpen(false)}
               className="absolute top-5 right-5 text-slate-400 hover:text-white transition cursor-pointer"
@@ -89,7 +89,10 @@ ${message}
 
             {submitted ? (
               <div className="py-8 text-center space-y-3">
-                <CheckCircle2 size={48} className="text-emerald-400 mx-auto animate-bounce" />
+                <CheckCircle2
+                  size={48}
+                  className="text-emerald-400 mx-auto animate-bounce"
+                />
                 <h3 className="text-xl font-bold">Feedback Sent!</h3>
                 <p className="text-xs text-slate-400">
                   Thanks for helping improve AuraSlides.

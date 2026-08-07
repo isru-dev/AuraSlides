@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const ai = require("../services/aiProvider");
+const protect = require("../middleware/authMiddleware.js");
 
 // Helper function to fetch photo from Unsplash API
 async function fetchImageUrl(keyword) {
@@ -27,7 +28,7 @@ async function fetchImageUrl(keyword) {
   }
 }
 
-router.post("/generate", async (req, res) => {
+router.post("/generate",protect, async (req, res) => {
   try {
     const { prompt } = req.body;
 
