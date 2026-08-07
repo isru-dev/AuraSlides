@@ -20,12 +20,14 @@ duration-300 h-[250px] flex items-center flex-col justify-center p-3"
 font-semibold
 text-2xl text-cyan-400"
           >
-AI Presentation Generation          </h1>
+            AI Presentation Generation{" "}
+          </h1>
           <p
             className="text-slate-300
 leading-relaxed py-7 px-14"
           >
-            Turn any prompt or rough topic into a complete, context-aware slide deck in seconds
+            Turn any prompt or rough topic into a complete, context-aware slide
+            deck in seconds
           </p>
         </div>
         <div
@@ -41,13 +43,14 @@ duration-300 flex items-center flex-col justify-center p-3"
             className="font-semibold
 text-2xl text-cyan-400"
           >
-           Built-In Image Search & Swaps
+            Built-In Image Search & Swaps
           </h1>
           <p
             className="text-slate-300
 leading-relaxed py-7"
           >
-            Easily search, swap, or delete slide images with custom keywords directly inside the editor so every slide fits your vibe.
+            Easily search, swap, or delete slide images with custom keywords
+            directly inside the editor so every slide fits your vibe.
           </p>
         </div>
         <div
@@ -63,13 +66,15 @@ duration-300 h-[250px]   flex items-center flex-col justify-center p-3"
             className="font-semibold
 text-2xl text-cyan-400"
           >
-           Auto-Sync & PPTX Export
+            Auto-Sync & PPTX Export
           </h1>
           <p
             className="text-slate-300
 leading-relaxed py-7"
           >
-           Your changes save automatically to your workspace, and you can export your deck as an editable .pptx file anytime with a single click.
+            Your changes save automatically to your workspace, and you can
+            export your deck as an editable .pptx file anytime with a single
+            click.
           </p>
         </div>
       </div>

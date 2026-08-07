@@ -7,7 +7,8 @@ import { Chat } from "./pages/Chat";
 import { ProtectedRoute } from "./components/ProtectedRoute"; 
 import { Profile } from "./pages/Profile";
 import {Toaster} from 'react-hot-toast'
-import { FeedbackWidget } from "./components/FeedbackWidget"; // Import here
+import { FeedbackWidget } from "./components/FeedbackWidget"; 
+import VerifyEmail from "./pages/VerifyEmail";
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/verify/:token" element={<VerifyEmail />} />
         <Route path='/profile'
             element={
               <ProtectedRoute>

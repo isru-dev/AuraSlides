@@ -327,7 +327,9 @@ export function Chat() {
         `${import.meta.env.VITE_API_URL}/api/ai/generate`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+           },
           body: JSON.stringify({ prompt: promptInput }),
         },
       );
